@@ -1,0 +1,230 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════
+   CSS DESIGN TOKENS — ADSUN Media Metrics Dashboard
+   ═══════════════════════════════════════════════════════════ */
+
+@layer base {
+  /* ─── Light Mode (Default — Swagger UI Theme) ───────────────────── */
+  :root {
+    --background: 210 20% 98%;      /* #FAFAFA — Swagger UI Light Background */
+    --foreground: 220 16% 27%;      /* #3B4151 — Swagger UI Charcoal Text */
+    --card: 0 0% 100%;              /* #FFFFFF — Pure White Cards */
+    --card-foreground: 220 16% 27%; /* #3B4151 */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 16% 27%;
+    --primary: 153 58% 45%;         /* #49CC90 — Swagger Signature Green */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 16% 93%;       /* #EBF0F5 */
+    --secondary-foreground: 220 16% 27%;
+    --muted: 210 16% 93%;
+    --muted-foreground: 220 10% 46%; /* #6B7280 */
+    --accent: 153 45% 94%;          /* #E8F6F0 — Swagger Green Soft Tint */
+    --accent-foreground: 153 58% 30%;
+    --destructive: 0 84% 60%;       /* #F93E3E — Swagger Red */
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 20% 88%;          /* #DDE2E8 */
+    --input: 214 20% 88%;
+    --ring: 153 58% 45%;
+    --radius: 0.75rem;
+
+    /* Custom dashboard tokens for Light mode */
+    --surface-elevated: 0 0% 100%;
+    --surface-hover: 210 20% 96%;
+    --status-online: 153 58% 45%;   /* #49CC90 */
+    --status-degraded: 34 97% 59%;  /* #FCA130 */
+    --status-offline: 215 16% 55%;  /* #6B7280 */
+    --status-critical: 0 84% 60%;   /* #F93E3E */
+
+    /* Glow effects */
+    --glow-blue: 0 0 20px rgba(37, 99, 235, 0.15);
+    --glow-green: 0 0 20px rgba(73, 204, 144, 0.2);
+    --glow-amber: 0 0 20px rgba(252, 161, 48, 0.2);
+    --glow-red: 0 0 20px rgba(249, 62, 62, 0.2);
+  }
+
+  /* ─── Dark Mode (NOC Ops) ─────────────────────────────── */
+  .dark {
+    --background: 215 28% 9%;       /* #0F172A */
+    --foreground: 210 40% 96%;      /* #F1F5F9 */
+    --card: 215 25% 15%;            /* #1E293B */
+    --card-foreground: 210 40% 96%; /* #F1F5F9 */
+    --popover: 215 25% 15%;         /* #1E293B */
+    --popover-foreground: 210 40% 96%;
+    --primary: 217 91% 60%;         /* #2563EB — Accent Blue */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 20% 22%;       /* #334155 */
+    --secondary-foreground: 210 40% 96%;
+    --muted: 215 20% 22%;           /* #334155 */
+    --muted-foreground: 215 16% 60%; /* #94A3B8 */
+    --accent: 215 20% 22%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 72% 51%;       /* #DC2626 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 20% 27%;          /* #334155 */
+    --input: 215 20% 27%;
+    --ring: 217 91% 60%;
+
+    /* Custom dashboard tokens for Dark mode */
+    --surface-elevated: 215 24% 18%;
+    --surface-hover: 215 22% 20%;
+    --status-online: 142 72% 36%;   /* #16A34A */
+    --status-degraded: 38 92% 45%;  /* #D97706 */
+    --status-offline: 215 16% 47%;  /* #64748B */
+    --status-critical: 0 72% 51%;   /* #DC2626 */
+
+    /* Glow effects */
+    --glow-blue: 0 0 20px rgba(37, 99, 235, 0.3);
+    --glow-green: 0 0 20px rgba(22, 163, 74, 0.3);
+    --glow-amber: 0 0 20px rgba(217, 119, 6, 0.3);
+    --glow-red: 0 0 20px rgba(220, 38, 38, 0.3);
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+    transition: background-color 0.2s ease, color 0.15s ease;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CUSTOM COMPONENT CLASSES
+   ═══════════════════════════════════════════════════════════ */
+
+@layer components {
+  /* ─── Glass Card Effect ───────────────────────────────── */
+  .glass-card {
+    @apply bg-card border border-border rounded-xl;
+    backdrop-filter: blur(8px);
+    background: hsl(var(--card) / 0.85);
+  }
+
+  .glass-card-elevated {
+    @apply glass-card shadow-lg;
+    background: hsl(var(--surface-elevated, var(--card)) / 0.9);
+  }
+
+  /* ─── Metric Value ────────────────────────────────────── */
+  .metric-value {
+    @apply font-mono text-2xl font-bold tracking-tight;
+  }
+
+  .metric-label {
+    @apply text-xs font-medium text-muted-foreground uppercase tracking-widest;
+  }
+
+  /* ─── Status Indicator ───────────────────────────────── */
+  .status-dot-online {
+    @apply w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_6px_rgba(22,163,74,0.7)];
+  }
+
+  .status-dot-degraded {
+    @apply w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_6px_rgba(217,119,6,0.7)];
+  }
+
+  .status-dot-offline {
+    @apply w-2.5 h-2.5 rounded-full bg-slate-500;
+  }
+
+  /* ─── Progress Bar Custom ─────────────────────────────── */
+  .progress-healthy [data-indicator] {
+    background: linear-gradient(90deg, #16A34A, #22C55E) !important;
+  }
+
+  .progress-warning [data-indicator] {
+    background: linear-gradient(90deg, #B45309, #D97706) !important;
+  }
+
+  .progress-critical [data-indicator] {
+    background: linear-gradient(90deg, #B91C1C, #DC2626) !important;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  /* ─── Scrollbar Styles ────────────────────────────────── */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  /* ─── Code / Monospace Block ──────────────────────────── */
+  .code-block {
+    @apply font-mono text-sm bg-black/40 rounded-lg p-4 text-green-400;
+    border: 1px solid rgba(22, 163, 74, 0.2);
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  /* ─── Gradient Text ───────────────────────────────────── */
+  .gradient-text {
+    background: linear-gradient(135deg, #60A5FA, #818CF8, #A78BFA);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ─── Table Row Hover ─────────────────────────────────── */
+  .table-row-hover {
+    @apply transition-colors duration-150 cursor-pointer;
+  }
+
+  .table-row-hover:hover {
+    @apply bg-muted/40;
+  }
+
+  /* ─── Quick Action Button ─────────────────────────────── */
+  .action-btn {
+    @apply flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium;
+    @apply border border-border bg-card/60 text-foreground;
+    @apply hover:bg-accent/60 hover:border-primary/40 transition-all duration-200;
+    @apply active:scale-95;
+  }
+
+  .action-btn-primary {
+    @apply action-btn bg-primary text-primary-foreground border-primary;
+    @apply hover:bg-primary/80 hover:border-primary;
+  }
+
+  .action-btn-danger {
+    @apply action-btn border-red-500/30 text-red-400;
+    @apply hover:bg-red-500/10 hover:border-red-500/60;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════════ */
+
+@layer utilities {
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-500 { animation-delay: 500ms; }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .text-balance { text-wrap: balance; }
+}
