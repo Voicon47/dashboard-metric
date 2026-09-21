@@ -51,6 +51,16 @@ export interface ServerMetrics {
   activeStreams?: number;
 }
 
+// ─── Queue Metrics ────────────────────────────────────────────
+export interface QueueMetrics {
+  Image: number;
+  Video: number;
+  CameraDebugLog: number;
+  ErrorImageLog: number;
+  EventAI: number;
+  AIConfig: number;
+}
+
 // ─── Server Node ──────────────────────────────────────────────
 export interface ServerNode {
   id: string;
@@ -67,6 +77,7 @@ export interface ServerNode {
   roleDescription?: string; // e.g. "ingest gateway han", "edge cdn sgn", "webrtc relay sin", etc.
   totalEndpointsCount?: number;
   warningEndpointsCount?: number;
+  queues?: QueueMetrics | null;
 }
 
 // ─── Settings ─────────────────────────────────────────────────
@@ -125,3 +136,29 @@ export interface PollingState {
   countdown: number; // seconds until next sync
   isActive: boolean;
 }
+
+// ─── Dashboard View Filters ───────────────────────────────────
+export type MetricRowKey =
+  | "cpuPercent"
+  | "ramGB"
+  | "managedHeapMb"
+  | "totalRequests"
+  | "rps"
+  | "latencyCurrentAvgMs"
+  | "minLatencyMs"
+  | "maxLatencyMs"
+  | "successRate"
+  | "errorRate4xx"
+  | "errorRate5xx";
+
+export interface TelemetryMatrixFilter {
+  serverIds: string[]; // Empty = hiển thị tất cả
+  hiddenMetricKeys: MetricRowKey[]; // Các hàng bị ẩn
+}
+
+export interface ServerColumnsFilter {
+  serverIds: string[]; // Empty = hiển thị tất cả
+  serverStatus: ServerStatus[]; // Empty = hiển thị tất cả status
+  endpointMethod: HttpMethod[]; // Empty = hiển thị tất cả method
+}
+

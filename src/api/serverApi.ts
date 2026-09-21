@@ -16,7 +16,8 @@ export const serverApi = {
    */
   ping: async (baseUrl: string, token?: string): Promise<number> => {
     const startTime = performance.now();
-    const response = await ApiService.GET(baseUrl, token);
+    // Thêm timeout 5s để tránh treo request khi ping
+    const response = await ApiService.GET(baseUrl, token, 5000);
     const contentType = response?.headers?.["content-type"];
     if (contentType && contentType.includes("text/html")) {
       throw new Error(
@@ -34,7 +35,8 @@ export const serverApi = {
     baseUrl: string,
     token?: string,
   ): Promise<{ metrics: Partial<ServerMetrics>; endpoints: Endpoint[] }> => {
-    const response = await ApiService.GET(baseUrl, token);
+    // Thêm timeout 5s để tránh thundering herd bị treo
+    const response = await ApiService.GET(baseUrl, token, 5000);
 
     const contentType = response?.headers?.["content-type"];
     if (contentType && contentType.includes("text/html")) {

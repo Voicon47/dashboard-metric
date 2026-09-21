@@ -1,6 +1,6 @@
 import React from "react";
 import type { Endpoint } from "../../types";
-import { useDashboardStore } from "../../store/useDashboardStore";
+import { useUIStore } from "../../store/useUIStore";
 import {
   getSectionTheme,
   getMethodBadgeStyle,
@@ -16,7 +16,7 @@ export interface MetricSectionProps {
   themeColor?: MetricSectionThemeKey | string;
 }
 
-export function MetricSection({
+export const MetricSection = React.memo(function MetricSection({
   title,
   icon,
   summary,
@@ -31,25 +31,31 @@ export function MetricSection({
     >
       {/* Section Header */}
       <div
-        className={`flex items-center justify-between px-2.5 py-1.5 ${theme.headerBg} text-white select-none`}
+        className={`flex items-center justify-between px-3 py-1.5 ${theme.headerBg} text-white select-none`}
       >
-        <div className="flex items-center gap-1.5 font-bold text-[10px] sm:text-[10.5px] uppercase tracking-wide">
+        <div className="flex items-center gap-1.5 font-bold text-xs sm:text-[12px] uppercase tracking-wide">
           <span className="shrink-0">{icon}</span>
           <span>{title}</span>
         </div>
         <div
-          className={`font-mono font-bold text-[9px] sm:text-[9.5px] px-2 py-0.5 rounded border border-white/20 text-white shadow-2xs ${theme.summaryBg}`}
+          className={`font-mono font-bold text-[10.5px] sm:text-[11px] px-2.5 py-0.5 rounded-md border border-white/20 text-white shadow-2xs ${theme.summaryBg}`}
         >
           {summary}
         </div>
       </div>
       {/* Rows Container */}
       <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800/60">
-        {children}
+        {React.Children.count(children) === 0 ? (
+          <div className="px-3 py-3 text-xs text-slate-400 italic text-center">
+            Không có endpoint phù hợp
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </div>
   );
-}
+});
 
 // ─── Shared Base Row ─────────────────────────────────────────────
 interface BaseRowProps {
@@ -60,7 +66,7 @@ interface BaseRowProps {
   badgeContent?: React.ReactNode;
 }
 
-function BaseRow({
+const BaseRow = React.memo(function BaseRow({
   ep,
   rightPrimary,
   rightSecondary,
@@ -70,29 +76,29 @@ function BaseRow({
   const methodStyle = getMethodBadgeStyle(ep.method);
 
   return (
-    <div className="flex items-center justify-between px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-      <div className="flex items-center gap-1.5 min-w-0 pr-1.5">
+    <div className="flex items-center justify-between px-2.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+      <div className="flex items-center gap-2 min-w-0 pr-2 flex-1">
         <span
-          className={`text-[8px] font-extrabold font-mono px-1 py-0.5 rounded uppercase leading-none shrink-0 ${methodStyle}`}
+          className={`text-[9.5px] font-bold font-mono px-1.5 py-0.5 rounded uppercase leading-none shrink-0 ${methodStyle}`}
         >
           {ep.method}
         </span>
         <span
-          className="font-mono text-[9.5px] text-slate-700 dark:text-slate-300 font-semibold group-hover:text-black dark:group-hover:text-white truncate max-w-[130px] sm:max-w-[145px]"
+          className="font-mono text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 font-semibold group-hover:text-black dark:group-hover:text-white truncate"
           title={ep.path}
         >
           {ep.path}
         </span>
       </div>
-      <div className="flex items-center gap-1.5 flex-shrink-0">
+      <div className="flex items-center gap-2 flex-shrink-0">
         {badgeContent}
         {rightPrimary && (
-          <div className="flex flex-col items-end leading-[1.1]">
-            <span className={`font-mono font-bold text-[10px] ${primaryColor}`}>
+          <div className="flex flex-col items-end leading-[1.15]">
+            <span className={`font-mono font-bold text-xs sm:text-[13px] tracking-tight ${primaryColor}`}>
               {rightPrimary}
             </span>
             {rightSecondary && (
-              <span className="font-mono text-[8.5px] text-slate-400 dark:text-slate-500 mt-0.5">
+              <span className="font-mono text-[9.5px] sm:text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
                 {rightSecondary}
               </span>
             )}
@@ -101,12 +107,12 @@ function BaseRow({
       </div>
     </div>
   );
-}
+});
 
 // ─── Specific Row Renderers ──────────────────────────────────────
 
-export function LatencyRow({ ep }: { ep: Endpoint }) {
-  const thresholds = useDashboardStore((state) => state.settings.thresholds);
+export const LatencyRow = React.memo(function LatencyRow({ ep }: { ep: Endpoint }) {
+  const thresholds = useUIStore((state) => state.settings.thresholds);
   const lat = ep.latencyCurrentAvgMs ?? (ep as any).latencyMs ?? 0;
   const color =
     lat >= thresholds.latencyDegraded
@@ -123,9 +129,9 @@ export function LatencyRow({ ep }: { ep: Endpoint }) {
       rightSecondary={`(Max: ${(ep.maxLatencyMs || Math.round(lat * 1.5)).toFixed(2)}ms)`}
     />
   );
-}
+});
 
-export function RpsRow({ ep }: { ep: Endpoint }) {
+export const RpsRow = React.memo(function RpsRow({ ep }: { ep: Endpoint }) {
   const formatRps = (val: number) =>
     val >= 1000 ? `${(val / 1000).toFixed(1)}k req/s` : `${val} req/s`;
   const bwMb = (ep.rps * 0.12).toFixed(1);
@@ -142,9 +148,9 @@ export function RpsRow({ ep }: { ep: Endpoint }) {
       rightSecondary={`(${bwLabel})`}
     />
   );
-}
+});
 
-export function Error4xxRow({ ep }: { ep: Endpoint }) {
+export const Error4xxRow = React.memo(function Error4xxRow({ ep }: { ep: Endpoint }) {
   const err = ep.errorRate4xx ?? (ep as any).errorRate ?? 0;
   const hasError = err > 0;
 
@@ -152,9 +158,9 @@ export function Error4xxRow({ ep }: { ep: Endpoint }) {
     <BaseRow
       ep={ep}
       badgeContent={
-        <div className="flex items-center gap-1 font-mono text-[9px] font-bold">
+        <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
           <span
-            className={`text-[8px] px-1 py-0.5 rounded leading-none ${
+            className={`text-[9px] px-1.5 py-0.5 rounded leading-none ${
               hasError
                 ? "bg-[#c2410c] text-white"
                 : "bg-slate-200 dark:bg-slate-700 text-slate-500"
@@ -163,11 +169,11 @@ export function Error4xxRow({ ep }: { ep: Endpoint }) {
             4xx
           </span>
           <span
-            className={
+            className={`text-xs sm:text-[12.5px] font-bold ${
               hasError
                 ? "text-[#c2410c] dark:text-orange-400"
                 : "text-slate-400 dark:text-slate-500"
-            }
+            }`}
           >
             {err.toFixed(2)}%
           </span>
@@ -175,10 +181,10 @@ export function Error4xxRow({ ep }: { ep: Endpoint }) {
       }
     />
   );
-}
+});
 
-export function Error5xxRow({ ep }: { ep: Endpoint }) {
-  const thresholds = useDashboardStore((state) => state.settings.thresholds);
+export const Error5xxRow = React.memo(function Error5xxRow({ ep }: { ep: Endpoint }) {
+  const thresholds = useUIStore((state) => state.settings.thresholds);
   const err = ep.errorRate5xx ?? (ep as any).errorRate ?? 0;
   const hasError = err > 0;
   const isDegraded = err >= thresholds.error5xxDegraded;
@@ -187,9 +193,9 @@ export function Error5xxRow({ ep }: { ep: Endpoint }) {
     <BaseRow
       ep={ep}
       badgeContent={
-        <div className="flex items-center gap-1 font-mono text-[9px] font-bold">
+        <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
           <span
-            className={`text-[8px] px-1 py-0.5 rounded leading-none ${
+            className={`text-[9px] px-1.5 py-0.5 rounded leading-none ${
               hasError
                 ? "bg-[#b91c1c] text-white"
                 : "bg-slate-200 dark:bg-slate-700 text-slate-500"
@@ -198,13 +204,13 @@ export function Error5xxRow({ ep }: { ep: Endpoint }) {
             5xx
           </span>
           <span
-            className={
+            className={`text-xs sm:text-[12.5px] font-bold ${
               isDegraded
                 ? "text-red-600 dark:text-red-400"
                 : hasError
                   ? "text-amber-600 dark:text-amber-400"
                   : "text-slate-400 dark:text-slate-500"
-            }
+            }`}
           >
             {err.toFixed(2)}%
           </span>
@@ -212,9 +218,9 @@ export function Error5xxRow({ ep }: { ep: Endpoint }) {
       }
     />
   );
-}
+});
 
-export function FastLatencyRow({ ep }: { ep: Endpoint }) {
+export const FastLatencyRow = React.memo(function FastLatencyRow({ ep }: { ep: Endpoint }) {
   const lat = ep.latencyCurrentAvgMs ?? 0;
   return (
     <BaseRow
@@ -224,4 +230,4 @@ export function FastLatencyRow({ ep }: { ep: Endpoint }) {
       rightSecondary={`(Min: ${(ep.minLatencyMs ?? lat).toFixed(2)}ms)`}
     />
   );
-}
+});

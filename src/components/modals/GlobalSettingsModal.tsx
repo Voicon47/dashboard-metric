@@ -10,14 +10,14 @@ import {
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { useDashboardStore } from "../../store/useDashboardStore";
+import { useUIStore } from "../../store/useUIStore";
 import { Settings } from "lucide-react";
 
 export function GlobalSettingsModal() {
-  const isOpen = useDashboardStore((state) => state.modals.settings);
-  const closeModal = useDashboardStore((state) => state.closeModal);
-  const settings = useDashboardStore((state) => state.settings);
-  const updateSettings = useDashboardStore((state) => state.updateSettings);
+  const isOpen = useUIStore((state) => state.modals.settings);
+  const closeModal = useUIStore((state) => state.closeModal);
+  const settings = useUIStore((state) => state.settings);
+  const updateSettings = useUIStore((state) => state.updateSettings);
 
   const [localThresholds, setLocalThresholds] = useState(settings.thresholds);
 

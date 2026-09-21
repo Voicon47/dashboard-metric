@@ -3,6 +3,8 @@
 // Chuẩn hóa bảng màu tập trung cho ServerColumnCard & MetricSection
 // ============================================================
 
+import type { ServerStatus } from "../types";
+
 export type MetricSectionThemeKey =
   | "latency"
   | "rps"
@@ -94,3 +96,21 @@ export const METHOD_BADGE_STYLES: Record<string, string> = {
 export function getMethodBadgeStyle(method: string): string {
   return METHOD_BADGE_STYLES[method.toUpperCase()] || "bg-slate-600 text-white";
 }
+
+// ─── Server Status Indicator Colors ──────────────────────────────
+export const STATUS_DOT_COLORS: Record<ServerStatus, string> = {
+  online: "bg-emerald-500",
+  degraded: "bg-amber-500",
+  offline: "bg-red-500",
+};
+
+export const STATUS_OPTIONS: {
+  status: ServerStatus;
+  label: string;
+  color: string;
+}[] = [
+  { status: "online", label: "Online", color: STATUS_DOT_COLORS.online },
+  { status: "degraded", label: "Degraded", color: STATUS_DOT_COLORS.degraded },
+  { status: "offline", label: "Offline", color: STATUS_DOT_COLORS.offline },
+];
+

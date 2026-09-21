@@ -31,7 +31,8 @@ import type {
   Region,
   ServerRole,
 } from "../../types";
-import { useDashboardStore } from "../../store/useDashboardStore";
+import { useUIStore } from "../../store/useUIStore";
+import { useServerStore } from "../../store/useServerStore";
 
 function generateId(): string {
   return `NODE-${Date.now().toString(36).toUpperCase()}`;
@@ -66,12 +67,12 @@ function createNewNode(values: ServerFormValues): ServerNode {
 
 export function AddEditServerModal() {
   const toast = useToast();
-  const modals = useDashboardStore((state) => state.modals);
-  const closeModal = useDashboardStore((state) => state.closeModal);
-  const editingNodeId = useDashboardStore((state) => state.editingNodeId);
-  const servers = useDashboardStore((state) => state.servers);
-  const addServer = useDashboardStore((state) => state.addServer);
-  const editServer = useDashboardStore((state) => state.editServer);
+  const modals = useUIStore((state) => state.modals);
+  const closeModal = useUIStore((state) => state.closeModal);
+  const editingNodeId = useUIStore((state) => state.editingNodeId);
+  const servers = useServerStore((state) => state.servers);
+  const addServer = useServerStore((state) => state.addServer);
+  const editServer = useServerStore((state) => state.editServer);
   const editingServer = servers.find((server) => server.id === editingNodeId);
   const isEditMode = !!editingServer;
   const [form, setForm] = useState<ServerFormValues>({

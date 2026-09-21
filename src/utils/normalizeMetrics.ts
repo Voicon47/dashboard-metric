@@ -112,9 +112,8 @@ function normalizeEndpoint(key: string, ep: RawEndpointData): Endpoint {
     errorRate4xx: parseFloat(rate4xx.toFixed(2)),
     errorRate5xx: parseFloat(rate5xx.toFixed(2)),
     successRate: parseFloat(epSuccessRate.toFixed(2)),
-    status:
-      rate5xx >= 5 || ep.latencyMs.currentAvg > 1000 ? "degraded" : "online",
-    isDegraded: rate5xx >= 5 || ep.latencyMs.currentAvg > 1000,
+    status: "online",
+    isDegraded: false,
   };
 }
 

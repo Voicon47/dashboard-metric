@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Badge } from "../ui/badge";
-import type { ServerNode } from "../../types";
+import type { ServerNode, ServerColumnsFilter, Endpoint } from "../../types";
 import {
   MetricSection,
   LatencyRow,
@@ -16,14 +16,23 @@ import {
   AlertOctagon,
   RotateCw,
 } from "lucide-react";
-import { useDashboardStore } from "../../store/useDashboardStore";
+import { useUIStore } from "../../store/useUIStore";
+import { useEndpointTopMetrics } from "../../hooks/useEndpointTopMetrics";
+import { QueueGauges } from "../queue/QueueGauges";
 
 export interface ServerColumnCardProps {
   server: ServerNode;
+  endpointFilter?: ServerColumnsFilter;
+  serverCount?: number;
 }
 
-export function ServerColumnCard({ server }: ServerColumnCardProps) {
-  const thresholds = useDashboardStore((state) => state.settings.thresholds);
+export const ServerColumnCard = React.memo(function ServerColumnCard({
+  server,
+  endpointFilter,
+  serverCount = 1,
+}: ServerColumnCardProps) {
+  const isSingleServer = serverCount === 1;
+  const thresholds = useUIStore((state) => state.settings.thresholds);
   const isDegraded = server.status === "degraded";
   const isOffline = server.status === "offline";
 
@@ -41,43 +50,27 @@ export function ServerColumnCard({ server }: ServerColumnCardProps) {
       : `${server.metrics.totalRequests}`;
   const header5xx = (server.metrics.errorRate5xx ?? 0).toFixed(2);
 
-  // Pre-sort endpoints for the different sections
-  // 1. Top Latency
-  const topLatency = useMemo(() => {
-    return [...server.endpoints]
-      .sort(
-        (a, b) => (b.latencyCurrentAvgMs ?? 0) - (a.latencyCurrentAvgMs ?? 0),
-      )
-      .slice(0, 5);
-  }, [server.endpoints]);
+  // Filter endpoints by method
+  const filteredEndpoints = useMemo(() => {
+    let list = server.endpoints;
+    if (!endpointFilter) return list;
 
-  // 2. Top RPS
-  const topRps = useMemo(() => {
-    return [...server.endpoints].sort((a, b) => b.rps - a.rps).slice(0, 5);
-  }, [server.endpoints]);
+    if (endpointFilter.endpointMethod.length > 0) {
+      list = list.filter((ep) =>
+        endpointFilter.endpointMethod.includes(ep.method)
+      );
+    }
 
-  // 3. Top 4xx
-  const top4xx = useMemo(() => {
-    return [...server.endpoints]
-      .sort((a, b) => (b.errorRate4xx ?? 0) - (a.errorRate4xx ?? 0))
-      .slice(0, 5);
-  }, [server.endpoints]);
+    return list;
+  }, [server.endpoints, endpointFilter]);
 
-  // 4. Top 5xx
-  const top5xx = useMemo(() => {
-    return [...server.endpoints]
-      .sort((a, b) => (b.errorRate5xx ?? 0) - (a.errorRate5xx ?? 0))
-      .slice(0, 5);
-  }, [server.endpoints]);
-
-  // 5. Fast Path (Lowest latency)
-  const topFast = useMemo(() => {
-    return [...server.endpoints]
-      .sort(
-        (a, b) => (a.latencyCurrentAvgMs ?? 0) - (b.latencyCurrentAvgMs ?? 0),
-      )
-      .slice(0, 5);
-  }, [server.endpoints]);
+  const {
+    topLatency,
+    topRps,
+    top4xx,
+    top5xx,
+    topFast,
+  } = useEndpointTopMetrics(filteredEndpoints);
 
   // Use real minLatencyMs for Fast Path header
   const minFast =
@@ -91,7 +84,11 @@ export function ServerColumnCard({ server }: ServerColumnCardProps) {
 
   return (
     <div
-      className={`min-w-[320px] max-w-[360px] snap-center shrink-0 rounded-2xl p-4 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col ${
+      className={`${
+        isSingleServer
+          ? "w-full min-w-0"
+          : "flex-1 min-w-[310px] sm:min-w-[330px]"
+      } snap-center shrink-0 rounded-2xl p-4 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col ${
         isOffline
           ? "bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 opacity-70"
           : isDegraded
@@ -100,10 +97,10 @@ export function ServerColumnCard({ server }: ServerColumnCardProps) {
       }`}
     >
       {/* ── Column Top Header: Server Tag + Status Badge ── */}
-      <div className="flex items-center justify-between gap-1.5 mb-2">
+      <div className="flex items-center justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-2 font-mono">
           <span
-            className={`font-bold text-xs ${
+            className={`font-bold text-sm sm:text-[15px] tracking-tight ${
               isOffline
                 ? "text-slate-500 dark:text-slate-400"
                 : isDegraded
@@ -113,33 +110,36 @@ export function ServerColumnCard({ server }: ServerColumnCardProps) {
           >
             {server.name}
           </span>
+          {filteredEndpoints.length !== server.endpoints.length && (
+            <span className="text-xs text-blue-600 dark:text-blue-400 font-mono font-semibold">
+              ({filteredEndpoints.length}/{server.endpoints.length})
+            </span>
+          )}
         </div>
 
         <Badge
-          variant="outline"
-          className={`uppercase text-[8px] font-bold px-2 py-0 h-4 border-0 ${
-            isOffline
-              ? "bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-              : isDegraded
-                ? "bg-red-500 text-white"
-                : "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30"
-          }`}
+          variant={server.status}
+          className="uppercase text-[10px] px-2 py-0.5 font-semibold"
         >
-          {isOffline
-            ? "DISCONNECTED"
-            : isDegraded
-              ? "OUTLIER ALERT"
-              : "OPTIMAL STABLE"}
+          {server.status}
         </Badge>
       </div>
 
       {/* ── Sub-bar: Metrics Grid ── */}
-      <div className="grid grid-cols-2 gap-y-1.5 text-[10px] font-mono mb-3 p-2 bg-slate-50/80 dark:bg-slate-800/40 rounded-lg border border-slate-100 dark:border-slate-700/50">
+      <div
+        className={`grid ${
+          isSingleServer
+            ? "grid-cols-2 sm:grid-cols-4"
+            : "grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
+        } gap-2.5 mb-3.5 p-2.5 bg-slate-50/90 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700/60 shadow-2xs`}
+      >
         {/* CPU */}
-        <div className="flex justify-between items-center pr-2 border-r border-slate-200 dark:border-slate-700/50">
-          <span className="text-slate-400 dark:text-slate-500">CPU</span>
+        <div className="flex items-baseline justify-between px-1.5 py-0.5 border-r border-slate-200 dark:border-slate-700/50">
+          <span className="text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
+            CPU
+          </span>
           <span
-            className={`font-bold ${
+            className={`font-mono font-extrabold text-sm sm:text-[15px] tracking-tight ${
               server.metrics.cpuPercent >= thresholds.cpuDegraded
                 ? "text-red-600 dark:text-red-500"
                 : server.metrics.cpuPercent >= thresholds.cpuWarning
@@ -151,36 +151,46 @@ export function ServerColumnCard({ server }: ServerColumnCardProps) {
           </span>
         </div>
         {/* RAM */}
-        <div className="flex justify-between items-center pl-2">
-          <span className="text-slate-400 dark:text-slate-500">RAM</span>
-          <span className="font-bold text-slate-700 dark:text-slate-300">
-            {ramVal}{" "}
-            <span className="font-normal text-[8px] opacity-70">
+        <div className="flex items-baseline justify-between px-1.5 py-0.5 sm:border-r lg:border-r-0 xl:border-r border-slate-200 dark:border-slate-700/50">
+          <span className="text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
+            RAM
+          </span>
+          <div className="flex items-baseline gap-1">
+            <span className="font-mono font-extrabold text-sm sm:text-[15px] tracking-tight text-slate-800 dark:text-slate-200">
+              {ramVal}
+            </span>
+            <span className="font-mono text-[9.5px] text-slate-400 dark:text-slate-500">
               ({server.metrics.managedHeapMb}M)
             </span>
-          </span>
+          </div>
         </div>
         {/* RPS */}
-        <div className="flex justify-between items-center pr-2 border-r border-slate-200 dark:border-slate-700/50">
-          <span className="text-slate-400 dark:text-slate-500">RPS</span>
-          <span className="font-bold text-slate-700 dark:text-slate-300">
-            {headerRps}{" "}
-            <span className="font-normal text-[8px] opacity-70">
+        <div className="flex items-baseline justify-between px-1.5 py-0.5 border-r border-slate-200 dark:border-slate-700/50">
+          <span className="text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
+            RPS
+          </span>
+          <div className="flex items-baseline gap-1">
+            <span className="font-mono font-extrabold text-sm sm:text-[15px] tracking-tight text-slate-800 dark:text-slate-200">
+              {headerRps}
+            </span>
+            <span className="font-mono text-[9.5px] text-slate-400 dark:text-slate-500">
               ({headerTotalReqs})
             </span>
-          </span>
+          </div>
         </div>
         {/* 5xx */}
-        <div className="flex justify-between items-center pl-2">
-          <span className="text-slate-400 dark:text-slate-500">5xx</span>
+        <div className="flex items-baseline justify-between px-1.5 py-0.5">
+          <span className="text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
+            5xx
+          </span>
           <span
-            className={`font-bold ${
+            className={`font-mono font-extrabold text-sm sm:text-[15px] tracking-tight ${
               (server.metrics.errorRate5xx ?? 0) >= thresholds.error5xxDegraded
                 ? "text-red-600 dark:text-red-500"
                 : (server.metrics.errorRate5xx ?? 0) >=
                     thresholds.error5xxWarning
                   ? "text-amber-600 dark:text-amber-500"
-                  : "text-slate-600 dark:text-slate-400"
+                  : "text-slate-700 dark:text-slate-300"
             }`}
           >
             {header5xx}%
@@ -188,7 +198,13 @@ export function ServerColumnCard({ server }: ServerColumnCardProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar">
+      <div
+        className={`flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar ${
+          isSingleServer
+            ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 [&>*]:mt-0"
+            : "flex flex-col"
+        }`}
+      >
         {/* Section 1: Top Latency */}
         <MetricSection
           title="1. ĐỘ TRỄ RESPONSE (AVG)"
@@ -252,7 +268,10 @@ export function ServerColumnCard({ server }: ServerColumnCardProps) {
             <FastLatencyRow key={`fast-${ep.id}`} ep={ep} />
           ))}
         </MetricSection>
+
+        {/* Section 6: Queue Monitor */}
+        <QueueGauges queues={server.queues} />
       </div>
     </div>
   );
-}
+});

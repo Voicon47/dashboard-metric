@@ -14,14 +14,15 @@ import { AddEditServerModal } from "./components/modals/AddEditServerModal";
 import { GlobalSettingsModal } from "./components/modals/GlobalSettingsModal";
 // import { PrometheusExporterModal } from "./components/modals/PrometheusExporterModal";
 import { Toaster } from "./components/ui/sonner";
-import { useDashboardStore } from "./store/useDashboardStore";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { useUIStore } from "./store/useUIStore";
+import { useServerStore } from "./store/useServerStore";
 import { serverApi } from "./api/serverApi";
 // ─── Inner App (has access to DashboardContext) ──────────────
 function DashboardApp() {
-  const servers = useDashboardStore((state) => state.servers);
-  const pollingInterval = useDashboardStore((state) => state.pollingInterval);
-  const forceSync = useDashboardStore((state) => state.forceSync);
-  const theme = useDashboardStore((state) => state.settings?.theme || "light");
+  const pollingInterval = useUIStore((state) => state.pollingInterval);
+  const theme = useUIStore((state) => state.settings?.theme || "light");
+  const forceSync = useServerStore((state) => state.forceSync);
 
   useEffect(() => {
     if (!pollingInterval || pollingInterval <= 0) return;
@@ -45,11 +46,18 @@ function DashboardApp() {
         {/* Bar 2: Critical Alert Banner */}
         {/* <AlertBanner /> */}
 
-        {/* Section 1: Cấu hình & Kết nối Server Telemetry (6/6 Nodes) */}
-        <ServerConfigTable />
+        {/* Section 1 & 2: Danh Sách Máy Chủ + Bảng So Sánh Tổng Quan (Cùng 1 hàng) */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 mb-4 items-stretch">
+          {/* Section 1: Cấu hình & Kết nối Server Telemetry */}
+          <div className="xl:col-span-5 2xl:col-span-4 min-w-0">
+            <ServerConfigTable />
+          </div>
 
-        {/* Section 2: Bảng So Sánh Tổng Quan (System Telemetry Matrix) */}
-        <TelemetryMatrix />
+          {/* Section 2: Bảng So Sánh Tổng Quan (System Telemetry Matrix) */}
+          <div className="xl:col-span-7 2xl:col-span-8 min-w-0">
+            <TelemetryMatrix />
+          </div>
+        </div>
 
         {/* Section 3: Khu Vực Endpoint Theo Từng Server [CORE PIPELINE] */}
         <ServerColumnsMatrix />
@@ -72,5 +80,9 @@ function DashboardApp() {
 
 // ─── Root App with Providers ─────────────────────────────────
 export default function App() {
-  return <DashboardApp />;
+  return (
+    <TooltipProvider delayDuration={150}>
+      <DashboardApp />
+    </TooltipProvider>
+  );
 }
