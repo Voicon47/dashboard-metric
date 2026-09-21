@@ -276,7 +276,7 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
       </div>
 
       {/* ─── Matrix Table ───────────────────────────────────────── */}
-      <div className="bg-white dark:bg-[#0c101d] border border-slate-200 dark:border-[#1b253b] rounded-md overflow-x-auto shadow-xs transition-colors flex-1">
+      <div className="bg-white dark:bg-[#0c101d] border border-slate-200 dark:border-[#1b253b] rounded-md overflow-auto min-h-0 custom-scrollbar shadow-xs transition-colors flex-1">
         <table className="w-full text-xs text-left border-collapse min-w-[780px]">
           {/* Table Header: Metric Name + Server Columns */}
           <thead>

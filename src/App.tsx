@@ -15,6 +15,11 @@ import { GlobalSettingsModal } from "./components/modals/GlobalSettingsModal";
 // import { PrometheusExporterModal } from "./components/modals/PrometheusExporterModal";
 import { Toaster } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "./components/ui/resizable";
 import { useUIStore } from "./store/useUIStore";
 import { useServerStore } from "./store/useServerStore";
 import { serverApi } from "./api/serverApi";
@@ -43,20 +48,30 @@ function DashboardApp() {
 
       {/* ─── Main Content ───────────────────────────────────── */}
       <main className="flex-1 w-full max-w-[1780px] mx-auto px-3 sm:px-5 py-3">
-        {/* Bar 2: Critical Alert Banner */}
-        {/* <AlertBanner /> */}
+        {/* Section 1 & 2: Resizable Horizontal Split (ServerConfigTable + TelemetryMatrix) */}
+        <div className="mb-4">
+          <ResizablePanelGroup
+            direction="horizontal"
+            autoSaveId="adsun-table-matrix-split"
+            className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white/30 dark:bg-[#0c101d]/30 shadow-xs min-h-[460px] items-stretch"
+          >
+            {/* Left Panel: ServerConfigTable */}
+            <ResizablePanel defaultSize={35} minSize={20} maxSize={55} className="min-w-0">
+              <div className="h-full p-2">
+                <ServerConfigTable />
+              </div>
+            </ResizablePanel>
 
-        {/* Section 1 & 2: Danh Sách Máy Chủ + Bảng So Sánh Tổng Quan (Cùng 1 hàng) */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 mb-4 items-stretch">
-          {/* Section 1: Cấu hình & Kết nối Server Telemetry */}
-          <div className="xl:col-span-5 2xl:col-span-4 min-w-0">
-            <ServerConfigTable />
-          </div>
+            {/* Vertical Drag Handle */}
+            <ResizableHandle withHandle />
 
-          {/* Section 2: Bảng So Sánh Tổng Quan (System Telemetry Matrix) */}
-          <div className="xl:col-span-7 2xl:col-span-8 min-w-0">
-            <TelemetryMatrix />
-          </div>
+            {/* Right Panel: TelemetryMatrix */}
+            <ResizablePanel defaultSize={65} minSize={45} className="min-w-0">
+              <div className="h-full p-2">
+                <TelemetryMatrix />
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
 
         {/* Section 3: Khu Vực Endpoint Theo Từng Server [CORE PIPELINE] */}

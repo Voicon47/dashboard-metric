@@ -186,7 +186,7 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
         </div>
 
         {/* ─── Server Cards List ────────────────────────────────── */}
-        <div className="space-y-3 overflow-y-auto max-h-[460px] flex-1 custom-scrollbar pr-1">
+        <div className="space-y-3 overflow-y-auto min-h-0 flex-1 custom-scrollbar pr-1">
           {servers.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
               Chưa có máy chủ nào. Bấm "+ Thêm server" để thêm mới.

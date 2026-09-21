@@ -9,8 +9,13 @@ import { useServerStore } from "../../store/useServerStore";
 import { useUIStore } from "../../store/useUIStore";
 import { ServerColumnCard } from "./ServerColumnCard";
 import { ColumnsFilterBar } from "../filters/ColumnsFilterBar";
+import { cn } from "../../lib/utils";
 
-export function ServerColumnsMatrix() {
+interface ServerColumnsMatrixProps {
+  className?: string;
+}
+
+export function ServerColumnsMatrix({ className }: ServerColumnsMatrixProps = {}) {
   const allServers = useServerStore((state) => state.servers);
   const columnsFilter = useUIStore((state) => state.columnsFilter);
 
