@@ -15,10 +15,18 @@ import {
   AlertTriangle,
   AlertOctagon,
   RotateCw,
+  Cpu,
+  HardDrive,
+  Activity,
 } from "lucide-react";
 import { useUIStore } from "../../store/useUIStore";
 import { useEndpointTopMetrics } from "../../hooks/useEndpointTopMetrics";
 import { QueueGauges } from "../queue/QueueGauges";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 export interface ServerColumnCardProps {
   server: ServerNode;
@@ -36,9 +44,28 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
   const isDegraded = server.status === "degraded";
   const isOffline = server.status === "offline";
 
+  // CPU Computations
   const cpuVal = server.metrics.cpuPercent.toFixed(1);
-  const ramVal = `${(server.metrics.ramGB ?? 0).toFixed(1)}GB`;
+  const isCpuDegraded = server.metrics.cpuPercent >= thresholds.cpuDegraded;
+  const isCpuWarning = server.metrics.cpuPercent >= thresholds.cpuWarning;
+  const cpuColor = isCpuDegraded
+    ? "text-red-600 dark:text-red-400"
+    : isCpuWarning
+      ? "text-amber-600 dark:text-amber-400"
+      : "text-emerald-600 dark:text-emerald-400";
+  const cpuStatus = isCpuDegraded
+    ? "Quá tải"
+    : isCpuWarning
+      ? "Cảnh báo"
+      : "Ổn định";
 
+  // RAM Computations
+  const ramVal = `${(server.metrics.ramGB ?? 0).toFixed(1)}GB`;
+  const heapMb = server.metrics.managedHeapMb
+    ? `${Math.round(server.metrics.managedHeapMb)}M`
+    : null;
+
+  // RPS Computations
   const headerRps =
     server.metrics.rps >= 1000
       ? `${(server.metrics.rps / 1000).toFixed(1)}k`
@@ -48,7 +75,19 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
     server.metrics.totalRequests >= 1000
       ? `${(server.metrics.totalRequests / 1000).toFixed(1)}k`
       : `${server.metrics.totalRequests}`;
-  const header5xx = (server.metrics.errorRate5xx ?? 0).toFixed(2);
+
+  // 5XX Computations
+  const errorRate5xx = server.metrics.errorRate5xx ?? 0;
+  const header5xx = errorRate5xx.toFixed(2);
+  const is5xxDegraded = errorRate5xx >= thresholds.error5xxDegraded;
+  const is5xxWarning = errorRate5xx >= thresholds.error5xxWarning;
+  const color5xx = is5xxDegraded
+    ? "text-red-600 dark:text-red-400"
+    : is5xxWarning
+      ? "text-amber-600 dark:text-amber-400"
+      : errorRate5xx === 0
+        ? "text-emerald-600 dark:text-emerald-400"
+        : "text-slate-700 dark:text-slate-300";
 
   // Filter endpoints by method
   const filteredEndpoints = useMemo(() => {
@@ -76,37 +115,34 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
   const minFast =
     topFast.length > 0
       ? (
-          topFast[0].minLatencyMs ??
-          topFast[0].latencyCurrentAvgMs ??
-          0
-        ).toFixed(1)
+        topFast[0].minLatencyMs ??
+        topFast[0].latencyCurrentAvgMs ??
+        0
+      ).toFixed(1)
       : "0";
 
   return (
     <div
-      className={`${
-        isSingleServer
+      className={`${isSingleServer
           ? "w-full min-w-0"
           : "flex-1 min-w-[310px] sm:min-w-[330px]"
-      } snap-center shrink-0 rounded-2xl p-4 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col ${
-        isOffline
+        } snap-center shrink-0 rounded-2xl p-4 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col ${isOffline
           ? "bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 opacity-70"
           : isDegraded
             ? "bg-[#fff8f8] dark:bg-[#1a0f16]/90 border border-[#fca5a5] dark:border-red-900/50"
             : "bg-white dark:bg-[#0b1120]/90 border border-slate-200 dark:border-slate-800/80"
-      }`}
+        }`}
     >
       {/* ── Column Top Header: Server Tag + Status Badge ── */}
       <div className="flex items-center justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-2 font-mono">
           <span
-            className={`font-bold text-sm sm:text-[15px] tracking-tight ${
-              isOffline
+            className={`font-bold text-sm sm:text-[15px] tracking-tight ${isOffline
                 ? "text-slate-500 dark:text-slate-400"
                 : isDegraded
                   ? "text-red-700 dark:text-red-400"
                   : "text-slate-900 dark:text-slate-100"
-            }`}
+              }`}
           >
             {server.name}
           </span>
@@ -125,85 +161,153 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
         </Badge>
       </div>
 
-      {/* ── Sub-bar: Metrics Grid ── */}
+      {/* ── Sub-bar: Modern 4-Card Metric Grid ── */}
       <div
-        className={`grid ${
-          isSingleServer
-            ? "grid-cols-2 sm:grid-cols-4"
-            : "grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
-        } gap-2.5 mb-3.5 p-2.5 bg-slate-50/90 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700/60 shadow-2xs`}
+        className={`grid grid-cols-4 ${isSingleServer ? "gap-2.5 sm:gap-3 p-2.5" : "gap-1.5 p-1.5"
+          } mb-3.5 bg-slate-50/80 dark:bg-slate-900/50 rounded-xl border border-slate-200/70 dark:border-slate-800/80 shadow-2xs`}
       >
-        {/* CPU */}
-        <div className="flex items-baseline justify-between px-1.5 py-0.5 border-r border-slate-200 dark:border-slate-700/50">
-          <span className="text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
-            CPU
-          </span>
-          <span
-            className={`font-mono font-extrabold text-sm sm:text-[15px] tracking-tight ${
-              server.metrics.cpuPercent >= thresholds.cpuDegraded
-                ? "text-red-600 dark:text-red-500"
-                : server.metrics.cpuPercent >= thresholds.cpuWarning
-                  ? "text-amber-600 dark:text-amber-500"
-                  : "text-emerald-600 dark:text-emerald-500"
-            }`}
-          >
-            {cpuVal}%
-          </span>
-        </div>
-        {/* RAM */}
-        <div className="flex items-baseline justify-between px-1.5 py-0.5 sm:border-r lg:border-r-0 xl:border-r border-slate-200 dark:border-slate-700/50">
-          <span className="text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
-            RAM
-          </span>
-          <div className="flex items-baseline gap-1">
-            <span className="font-mono font-extrabold text-sm sm:text-[15px] tracking-tight text-slate-800 dark:text-slate-200">
-              {ramVal}
-            </span>
-            <span className="font-mono text-[9.5px] text-slate-400 dark:text-slate-500">
-              ({server.metrics.managedHeapMb}M)
-            </span>
-          </div>
-        </div>
-        {/* RPS */}
-        <div className="flex items-baseline justify-between px-1.5 py-0.5 border-r border-slate-200 dark:border-slate-700/50">
-          <span className="text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
-            RPS
-          </span>
-          <div className="flex items-baseline gap-1">
-            <span className="font-mono font-extrabold text-sm sm:text-[15px] tracking-tight text-slate-800 dark:text-slate-200">
-              {headerRps}
-            </span>
-            <span className="font-mono text-[9.5px] text-slate-400 dark:text-slate-500">
-              ({headerTotalReqs})
-            </span>
-          </div>
-        </div>
-        {/* 5xx */}
-        <div className="flex items-baseline justify-between px-1.5 py-0.5">
-          <span className="text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
-            5xx
-          </span>
-          <span
-            className={`font-mono font-extrabold text-sm sm:text-[15px] tracking-tight ${
-              (server.metrics.errorRate5xx ?? 0) >= thresholds.error5xxDegraded
-                ? "text-red-600 dark:text-red-500"
-                : (server.metrics.errorRate5xx ?? 0) >=
-                    thresholds.error5xxWarning
-                  ? "text-amber-600 dark:text-amber-500"
-                  : "text-slate-700 dark:text-slate-300"
-            }`}
-          >
-            {header5xx}%
-          </span>
-        </div>
+        {/* 1. CPU */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex flex-col items-center justify-center p-1.5 rounded-lg bg-white dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-default text-center group min-w-0">
+              <div className="flex items-center gap-1 mb-1">
+                <Cpu className="w-3 h-3 text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 transition-colors" />
+                <span className="text-[10px] font-bold font-mono tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+                  CPU
+                </span>
+              </div>
+              <span
+                className={`font-mono font-extrabold text-[13px] sm:text-sm tracking-tight leading-tight ${cpuColor}`}
+              >
+                {cpuVal}%
+              </span>
+              <span
+                className={`text-[9.5px] font-mono leading-none mt-1 ${isCpuDegraded
+                    ? "text-red-500 dark:text-red-400"
+                    : isCpuWarning
+                      ? "text-amber-500 dark:text-amber-400"
+                      : "text-emerald-600 dark:text-emerald-400"
+                  }`}
+              >
+                {cpuStatus}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            <p className="font-semibold text-slate-900 dark:text-white">
+              CPU: {cpuVal}%
+            </p>
+            <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+              Cảnh báo: &ge;{thresholds.cpuWarning}% | Quá tải: &ge;{thresholds.cpuDegraded}%
+            </p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* 2. RAM */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex flex-col items-center justify-center p-1.5 rounded-lg bg-white dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-default text-center group min-w-0">
+              <div className="flex items-center gap-1 mb-1">
+                <HardDrive className="w-3 h-3 text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 transition-colors" />
+                <span className="text-[10px] font-bold font-mono tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+                  RAM
+                </span>
+              </div>
+              <span className="font-mono font-extrabold text-[13px] sm:text-sm tracking-tight leading-tight text-slate-800 dark:text-slate-100">
+                {ramVal}
+              </span>
+              <span className="text-[9.5px] font-mono text-slate-400 dark:text-slate-500 leading-none mt-1 truncate max-w-full">
+                {heapMb ? `${heapMb} heap` : "Heap OK"}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            <p className="font-semibold text-slate-900 dark:text-white">
+              RAM: {ramVal}
+            </p>
+            <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+              Managed Heap: {server.metrics.managedHeapMb ? `${server.metrics.managedHeapMb} MB` : "N/A"}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* 3. RPS */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex flex-col items-center justify-center p-1.5 rounded-lg bg-white dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-default text-center group min-w-0">
+              <div className="flex items-center gap-1 mb-1">
+                <Activity className="w-3 h-3 text-slate-400 dark:text-slate-500 group-hover:text-blue-500 transition-colors" />
+                <span className="text-[10px] font-bold font-mono tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+                  RPS
+                </span>
+              </div>
+              <span className="font-mono font-extrabold text-[13px] sm:text-sm tracking-tight leading-tight text-blue-600 dark:text-blue-400">
+                {headerRps}
+              </span>
+              <span className="text-[9.5px] font-mono text-slate-400 dark:text-slate-500 leading-none mt-1 truncate max-w-full">
+                {headerTotalReqs} tổng
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            <p className="font-semibold text-slate-900 dark:text-white">
+              RPS: {server.metrics.rps} req/giây
+            </p>
+            <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+              Tổng số request: {server.metrics.totalRequests.toLocaleString()}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* 4. 5XX */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex flex-col items-center justify-center p-1.5 rounded-lg bg-white dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-default text-center group min-w-0">
+              <div className="flex items-center gap-1 mb-1">
+                <AlertOctagon
+                  className={`w-3 h-3 ${is5xxDegraded || is5xxWarning
+                      ? "text-red-500"
+                      : "text-slate-400 dark:text-slate-500"
+                    } group-hover:text-amber-500 transition-colors`}
+                />
+                <span className="text-[10px] font-bold font-mono tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+                  5XX
+                </span>
+              </div>
+              <span
+                className={`font-mono font-extrabold text-[13px] sm:text-sm tracking-tight leading-tight ${color5xx}`}
+              >
+                {header5xx}%
+              </span>
+              <span className="text-[9.5px] font-mono leading-none mt-1 truncate max-w-full">
+                {errorRate5xx === 0 ? (
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    0 lỗi
+                  </span>
+                ) : (
+                  <span className="text-red-500 dark:text-red-400">
+                    Có lỗi
+                  </span>
+                )}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            <p className="font-semibold text-slate-900 dark:text-white">
+              Lỗi 5xx: {header5xx}%
+            </p>
+            <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+              Cảnh báo: &ge;{thresholds.error5xxWarning}% | Nguy hiểm: &ge;{thresholds.error5xxDegraded}%
+            </p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <div
-        className={`flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar ${
-          isSingleServer
+        className={`flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar ${isSingleServer
             ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 [&>*]:mt-0"
             : "flex flex-col"
-        }`}
+          }`}
       >
         {/* Section 1: Top Latency */}
         <MetricSection

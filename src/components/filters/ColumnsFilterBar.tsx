@@ -73,12 +73,16 @@ export function ColumnsFilterBar({ servers }: ColumnsFilterBarProps) {
 
   // ── Status Toggle ───────────────────────────────────────────
   const handleToggleStatus = (status: ServerStatus) => {
-    const isSelected = columnsFilter.serverStatus.includes(status);
     let newStatus: ServerStatus[];
-    if (isSelected) {
+    if (columnsFilter.serverStatus.length === 0) {
+      newStatus = STATUS_OPTIONS.map((o) => o.status).filter((s) => s !== status);
+    } else if (columnsFilter.serverStatus.includes(status)) {
       newStatus = columnsFilter.serverStatus.filter((s) => s !== status);
     } else {
       newStatus = [...columnsFilter.serverStatus, status];
+      if (newStatus.length === STATUS_OPTIONS.length) {
+        newStatus = [];
+      }
     }
     setColumnsFilter({ serverStatus: newStatus });
   };
@@ -156,36 +160,66 @@ export function ColumnsFilterBar({ servers }: ColumnsFilterBarProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* ─── Server Status Quick Filter Pills ─── */}
-      <div className="flex items-center gap-1 bg-white dark:bg-[#0f1422] p-0.5 rounded-md border border-slate-200 dark:border-slate-700/80">
-        <button
-          onClick={() => setColumnsFilter({ serverStatus: [] })}
-          className={`h-6 px-2 text-[10.5px] rounded font-medium transition-colors ${
-            columnsFilter.serverStatus.length === 0
-              ? "bg-slate-200/80 dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-          }`}
-        >
-          Tất cả TT
-        </button>
-        {STATUS_OPTIONS.map((item) => {
-          const isActive = columnsFilter.serverStatus.includes(item.status);
-          return (
+      {/* ─── Status Filter Dropdown ─── */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={`h-7 px-2 text-[11px] font-medium border rounded-md gap-1 transition-colors ${
+              columnsFilter.serverStatus.length > 0
+                ? "border-emerald-500/60 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                : "border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#0f1422] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+            }`}
+          >
+            <Activity className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+            <span>
+              Trạng thái (
+              {columnsFilter.serverStatus.length === 0
+                ? "Tất cả"
+                : `${columnsFilter.serverStatus.length}/${STATUS_OPTIONS.length}`}
+              )
+            </span>
+            <ChevronDown className="w-3 h-3 opacity-60" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48">
+          <div className="flex items-center justify-between px-2 py-1.5">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              Trạng thái Node
+            </span>
             <button
-              key={item.status}
-              onClick={() => handleToggleStatus(item.status)}
-              className={`h-6 px-1.5 flex items-center gap-1 text-[10.5px] rounded font-medium transition-colors ${
-                isActive
-                  ? "bg-slate-200/90 dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-2xs font-semibold"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 opacity-70 hover:opacity-100"
-              }`}
+              onClick={() => setColumnsFilter({ serverStatus: [] })}
+              className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-medium cursor-pointer"
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${item.color}`} />
-              <span>{item.label}</span>
+              Hiện tất cả
             </button>
-          );
-        })}
-      </div>
+          </div>
+          <DropdownMenuSeparator />
+          {STATUS_OPTIONS.map((item) => {
+            const isChecked =
+              columnsFilter.serverStatus.length === 0 ||
+              columnsFilter.serverStatus.includes(item.status);
+
+            return (
+              <DropdownMenuCheckboxItem
+                key={item.status}
+                checked={isChecked}
+                onSelect={(e) => e.preventDefault()}
+                onCheckedChange={() => handleToggleStatus(item.status)}
+                className="text-xs py-1.5 cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full pr-1">
+                  <span className="capitalize font-medium">{item.label}</span>
+                  <span
+                    className={`inline-block w-2 h-2 rounded-full ml-2 ${item.color}`}
+                  />
+                </div>
+              </DropdownMenuCheckboxItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* ─── HTTP Method Filter Pills ─── */}
       <div className="flex items-center gap-0.5 bg-white dark:bg-[#0f1422] p-0.5 rounded-md border border-slate-200 dark:border-slate-700/80">
