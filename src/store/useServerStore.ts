@@ -6,6 +6,8 @@ import type {
   ServerNode,
   ServerStatus,
   QueueMetrics,
+  ServerHistories,
+  ServerDataPoint,
 } from "../types";
 import { serverApi } from "../api/serverApi";
 import { queueApi } from "../api/queueApi";
@@ -14,6 +16,7 @@ import { useUIStore } from "./useUIStore";
 
 export interface ServerStoreState {
   servers: ServerNode[];
+  serverHistories: ServerHistories;
   addServer: (sever: ServerNode) => void;
   editServer: (sever: ServerNode) => void;
   deleteServer: (id: string) => void;
@@ -31,7 +34,7 @@ export const useServerStore = create<ServerStoreState>()(
   persist(
     (set, get) => ({
       servers: [],
-
+      serverHistories: {},
       addServer: (server) =>
         set((state) => ({
           servers: [...state.servers, server],
@@ -122,12 +125,36 @@ export const useServerStore = create<ServerStoreState>()(
           
           await Promise.allSettled(promises);
         }
-
+        set((state) => {
+          const newHistories = { ...state.serverHistories };
+          state.servers.forEach((server) => {
+            const isOnline = server.status === "online" || server.status === "degraded";
+            
+            const newPoint: ServerDataPoint = {
+              timestamp: Date.now(),
+              totalRequest: isOnline ? (server.metrics.totalRequests ?? 0) : 0,
+              rps: isOnline ? (server.metrics.rps ?? 0) : 0,
+              cpu: isOnline ? (server.metrics?.cpuPercent ?? 0) : 0,
+              ram: isOnline ? (server.metrics?.ramGB ?? 0) : 0,
+              latency: isOnline ? (server.metrics?.latencyCurrentAvgMs ?? 0) : 0,
+            };
+            const prevHistory = newHistories[server.id] ?? [];
+            const fifteenMinsAgo = Date.now() - 15 * 60 * 1000;
+            // Chỉ giữ các điểm trong 15 phút gần nhất và tối đa 60 điểm
+            const validHistory = prevHistory.filter(p => p.timestamp >= fifteenMinsAgo);
+            newHistories[server.id] = [...validHistory, newPoint].slice(-60);
+          });
+          return { serverHistories: newHistories };
+        });
         useUIStore.getState().setLastSyncAt(Date.now());
       },
     }),
     {
       name: "adsun-server-store",
+      partialize: (state) => ({
+        servers: state.servers,
+        // Bỏ qua serverHistories để tránh việc load lại data cũ từ nhiều giờ/ngày trước
+      }),
     },
   ),
 );

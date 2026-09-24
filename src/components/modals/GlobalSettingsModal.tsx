@@ -19,11 +19,19 @@ export function GlobalSettingsModal() {
   const settings = useUIStore((state) => state.settings);
   const updateSettings = useUIStore((state) => state.updateSettings);
 
-  const [localThresholds, setLocalThresholds] = useState(settings.thresholds);
+  const [localThresholds, setLocalThresholds] = useState({
+    ...settings.thresholds,
+    queueWarning: settings.thresholds?.queueWarning ?? 50,
+    queueDegraded: settings.thresholds?.queueDegraded ?? 300,
+  });
 
   useEffect(() => {
     if (isOpen) {
-      setLocalThresholds(settings.thresholds);
+      setLocalThresholds({
+        ...settings.thresholds,
+        queueWarning: settings.thresholds?.queueWarning ?? 50,
+        queueDegraded: settings.thresholds?.queueDegraded ?? 300,
+      });
     }
   }, [isOpen, settings.thresholds]);
 
@@ -40,12 +48,60 @@ export function GlobalSettingsModal() {
     }));
   };
 
+  const thresholdConfigs = [
+    {
+      id: "cpu",
+      title: "CPU Threshold (%)",
+      warnKey: "cpuWarning" as const,
+      degKey: "cpuDegraded" as const,
+      preview: (warn: number, deg: number) => (
+        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+          &lt;{warn}% (Xanh) | &ge;{deg}% (Đỏ)
+        </span>
+      ),
+    },
+    {
+      id: "latency",
+      title: "Latency Threshold (ms)",
+      warnKey: "latencyWarning" as const,
+      degKey: "latencyDegraded" as const,
+      preview: (warn: number, deg: number) => (
+        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+          &lt;{warn}ms (Xanh) | &ge;{deg}ms (Đỏ)
+        </span>
+      ),
+    },
+    {
+      id: "error5xx",
+      title: "Error 5xx Threshold (%)",
+      warnKey: "error5xxWarning" as const,
+      degKey: "error5xxDegraded" as const,
+      preview: (warn: number, deg: number) => (
+        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+          &lt;{warn}% (Xanh) | &ge;{deg}% (Đỏ)
+        </span>
+      ),
+    },
+    {
+      id: "queue",
+      title: "Queue Threshold",
+      warnKey: "queueWarning" as const,
+      degKey: "queueDegraded" as const,
+      warnLabel: "Warning (Vàng / Cam)",
+      preview: (warn: number, deg: number) => (
+        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+          &lt;{warn} (Xanh) | &ge;{deg} (Đỏ)
+        </span>
+      ),
+    },
+  ];
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => !open && closeModal("settings")}
     >
-      <DialogContent className="sm:max-w-[460px] bg-white dark:bg-[#0b0f19] border-slate-200 dark:border-slate-800">
+      <DialogContent className="sm:max-w-[480px] max-h-[88vh] flex flex-col bg-white dark:bg-[#0b0f19] border-slate-200 dark:border-slate-800">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
             <Settings className="h-5 w-5" />
@@ -56,107 +112,50 @@ export function GlobalSettingsModal() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
-          {/* CPU */}
-          <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-100 dark:border-slate-800">
-            <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-200">
-              CPU Threshold (%)
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-amber-600 dark:text-amber-500 text-xs">
-                  Warning (Vàng)
-                </Label>
-                <Input
-                  type="number"
-                  className="h-8 bg-white dark:bg-slate-900"
-                  value={localThresholds.cpuWarning}
-                  onChange={(e) => handleChange("cpuWarning", e.target.value)}
-                />
+        <div className="grid gap-4 py-2 overflow-y-auto pr-1">
+          {thresholdConfigs.map((block) => (
+            <div
+              key={block.id}
+              className="space-y-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-100 dark:border-slate-800"
+            >
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-200">
+                  {block.title}
+                </h4>
+                {block.preview &&
+                  block.preview(
+                    localThresholds[block.warnKey] ?? 0,
+                    localThresholds[block.degKey] ?? 0,
+                  )}
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-red-600 dark:text-red-500 text-xs">
-                  Degraded (Đỏ)
-                </Label>
-                <Input
-                  type="number"
-                  className="h-8 bg-white dark:bg-slate-900"
-                  value={localThresholds.cpuDegraded}
-                  onChange={(e) => handleChange("cpuDegraded", e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Latency */}
-          <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-100 dark:border-slate-800">
-            <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-200">
-              Latency Threshold (ms)
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-amber-600 dark:text-amber-500 text-xs">
-                  Warning (Vàng)
-                </Label>
-                <Input
-                  type="number"
-                  className="h-8 bg-white dark:bg-slate-900"
-                  value={localThresholds.latencyWarning}
-                  onChange={(e) =>
-                    handleChange("latencyWarning", e.target.value)
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-red-600 dark:text-red-500 text-xs">
-                  Degraded (Đỏ)
-                </Label>
-                <Input
-                  type="number"
-                  className="h-8 bg-white dark:bg-slate-900"
-                  value={localThresholds.latencyDegraded}
-                  onChange={(e) =>
-                    handleChange("latencyDegraded", e.target.value)
-                  }
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-amber-600 dark:text-amber-500 text-xs">
+                    {block.warnLabel || "Warning (Vàng)"}
+                  </Label>
+                  <Input
+                    type="number"
+                    className="h-8 bg-white dark:bg-slate-900 font-mono"
+                    value={localThresholds[block.warnKey] ?? ""}
+                    onChange={(e) =>
+                      handleChange(block.warnKey, e.target.value)
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-red-600 dark:text-red-500 text-xs">
+                    Degraded (Đỏ)
+                  </Label>
+                  <Input
+                    type="number"
+                    className="h-8 bg-white dark:bg-slate-900 font-mono"
+                    value={localThresholds[block.degKey] ?? ""}
+                    onChange={(e) => handleChange(block.degKey, e.target.value)}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* 5xx Error */}
-          <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-100 dark:border-slate-800">
-            <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-200">
-              Error 5xx Threshold (%)
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-amber-600 dark:text-amber-500 text-xs">
-                  Warning (Vàng)
-                </Label>
-                <Input
-                  type="number"
-                  className="h-8 bg-white dark:bg-slate-900"
-                  value={localThresholds.error5xxWarning}
-                  onChange={(e) =>
-                    handleChange("error5xxWarning", e.target.value)
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-red-600 dark:text-red-500 text-xs">
-                  Degraded (Đỏ)
-                </Label>
-                <Input
-                  type="number"
-                  className="h-8 bg-white dark:bg-slate-900"
-                  value={localThresholds.error5xxDegraded}
-                  onChange={(e) =>
-                    handleChange("error5xxDegraded", e.target.value)
-                  }
-                />
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         <DialogFooter>

@@ -9,6 +9,8 @@ import {
   PackageSearch,
 } from "lucide-react";
 import type { QueueMetrics } from "../../types";
+import { useUIStore } from "../../store/useUIStore";
+import { getQueueTheme, getQueueItemColor } from "../../constants/metricTheme";
 
 interface QueueGaugesProps {
   queues: QueueMetrics | null | undefined;
@@ -61,22 +63,12 @@ export function QueueGauges({ queues }: QueueGaugesProps) {
 
   const total = items.reduce((sum, item) => sum + item.value, 0);
 
-  // Styling logic
-  const isHealthy = total === 0;
-  const isWarning = total > 0 && total <= 50; // Just an arbitrary threshold
-  const isCritical = total > 50;
+  // Styling logic based on thresholds
+  const settings = useUIStore((state) => state.settings);
+  const warningThreshold = settings.thresholds?.queueWarning ?? 50;
+  const degradedThreshold = settings.thresholds?.queueDegraded ?? 300;
 
-  const headerBg = isHealthy
-    ? "bg-slate-800 dark:bg-slate-800/80 text-white"
-    : isCritical
-    ? "bg-rose-600 dark:bg-rose-900/80 text-white"
-    : "bg-amber-500 dark:bg-amber-700/80 text-white";
-
-  const borderColor = isHealthy
-    ? "border-slate-200 dark:border-slate-800/60"
-    : isCritical
-    ? "border-rose-300 dark:border-rose-900/60"
-    : "border-amber-300 dark:border-amber-800/60";
+  const { headerBg, borderColor } = getQueueTheme(total, warningThreshold, degradedThreshold);
 
   return (
     <div className={`mt-2.5 rounded-sm border-2 ${borderColor} overflow-hidden bg-white dark:bg-[#0c1220] shadow-xs`}>
@@ -92,12 +84,7 @@ export function QueueGauges({ queues }: QueueGaugesProps) {
 
       <div className="grid grid-cols-2 gap-px bg-slate-100 dark:bg-slate-800/60">
         {items.map((item, idx) => {
-          const valColor =
-            item.value === 0
-              ? "text-emerald-600 dark:text-emerald-400"
-              : item.value > 10
-              ? "text-rose-600 dark:text-rose-400"
-              : "text-amber-600 dark:text-amber-400";
+          const valColor = getQueueItemColor(item.value, warningThreshold, degradedThreshold);
           return (
             <div
               key={idx}

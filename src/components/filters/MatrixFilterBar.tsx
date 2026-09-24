@@ -31,12 +31,11 @@ export const ALL_METRIC_KEYS: { key: MetricRowKey; label: string }[] = [
   { key: "managedHeapMb", label: "Heap RAM (MB)" },
   { key: "totalRequests", label: "Total Requests" },
   { key: "rps", label: "Ingest / Total RPS" },
-  { key: "latencyCurrentAvgMs", label: "Avg Latency (ms)" },
-  { key: "minLatencyMs", label: "Min Latency (ms)" },
-  { key: "maxLatencyMs", label: "Max Latency (ms)" },
+  { key: "latencyCurrentAvgMs", label: "Latency (Avg/Min/Max)" },
   { key: "successRate", label: "Success Rate (2xx/3xx)" },
   { key: "errorRate4xx", label: "4xx Error Rate (%)" },
   { key: "errorRate5xx", label: "5xx Error Rate (%)" },
+  { key: "totalQueue", label: "Total Queue" },
 ];
 
 interface MatrixFilterBarProps {

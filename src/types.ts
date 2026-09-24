@@ -49,6 +49,8 @@ export interface ServerMetrics {
   maxLatencyMs?: number;
   successRate?: number;
   activeStreams?: number;
+  errorCount4xx?: number;
+  errorCount5xx?: number;
 }
 
 // ─── Queue Metrics ────────────────────────────────────────────
@@ -88,6 +90,8 @@ export interface ThresholdSettings {
   latencyDegraded: number;
   error5xxWarning: number;
   error5xxDegraded: number;
+  queueWarning: number;
+  queueDegraded: number;
 }
 
 export interface DashboardSettings {
@@ -145,11 +149,10 @@ export type MetricRowKey =
   | "totalRequests"
   | "rps"
   | "latencyCurrentAvgMs"
-  | "minLatencyMs"
-  | "maxLatencyMs"
   | "successRate"
   | "errorRate4xx"
-  | "errorRate5xx";
+  | "errorRate5xx"
+  | "totalQueue";
 
 export interface TelemetryMatrixFilter {
   serverIds: string[]; // Empty = hiển thị tất cả
@@ -161,4 +164,17 @@ export interface ServerColumnsFilter {
   serverStatus: ServerStatus[]; // Empty = hiển thị tất cả status
   endpointMethod: HttpMethod[]; // Empty = hiển thị tất cả method
 }
+
+// Chart history
+
+export interface ServerDataPoint {
+  timestamp: number;       // timestamp dạng number 
+  totalRequest: number;
+  rps: number;
+  cpu: number;     // CPU %
+  ram: number;     // RAM GB
+  latency: number; // Latency ms
+}
+
+export type ServerHistories = Record<string, ServerDataPoint[]>;
 

@@ -94,11 +94,13 @@ const BaseRow = React.memo(function BaseRow({
         {badgeContent}
         {rightPrimary && (
           <div className="flex flex-col items-end leading-[1.15]">
-            <span className={`font-mono font-bold text-xs sm:text-[13px] tracking-tight ${primaryColor}`}>
+            <span
+              className={`font-mono font-bold text-xs sm:text-[13px] tracking-tight ${primaryColor}`}
+            >
               {rightPrimary}
             </span>
             {rightSecondary && (
-              <span className="font-mono text-[9.5px] sm:text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+              <span className="font-mono text-[9.5px] sm:text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
                 {rightSecondary}
               </span>
             )}
@@ -111,7 +113,11 @@ const BaseRow = React.memo(function BaseRow({
 
 // ─── Specific Row Renderers ──────────────────────────────────────
 
-export const LatencyRow = React.memo(function LatencyRow({ ep }: { ep: Endpoint }) {
+export const LatencyRow = React.memo(function LatencyRow({
+  ep,
+}: {
+  ep: Endpoint;
+}) {
   const thresholds = useUIStore((state) => state.settings.thresholds);
   const lat = ep.latencyCurrentAvgMs ?? (ep as any).latencyMs ?? 0;
   const color =
@@ -145,14 +151,19 @@ export const RpsRow = React.memo(function RpsRow({ ep }: { ep: Endpoint }) {
       ep={ep}
       primaryColor="text-slate-800 dark:text-slate-200"
       rightPrimary={formatRps(ep.rps)}
-      rightSecondary={`(${bwLabel})`}
+      // rightSecondary={`(${bwLabel})`}
     />
   );
 });
 
-export const Error4xxRow = React.memo(function Error4xxRow({ ep }: { ep: Endpoint }) {
+export const Error4xxRow = React.memo(function Error4xxRow({
+  ep,
+}: {
+  ep: Endpoint;
+}) {
   const err = ep.errorRate4xx ?? (ep as any).errorRate ?? 0;
   const hasError = err > 0;
+  const count = Math.round((err / 100) * ep.totalRequests);
 
   return (
     <BaseRow
@@ -169,13 +180,14 @@ export const Error4xxRow = React.memo(function Error4xxRow({ ep }: { ep: Endpoin
             4xx
           </span>
           <span
-            className={`text-xs sm:text-[12.5px] font-bold ${
+            className={`text-xs sm:text-[12.5px] font-bold flex items-center gap-1 ${
               hasError
                 ? "text-[#c2410c] dark:text-orange-400"
-                : "text-slate-400 dark:text-slate-500"
+                : "text-slate-500 dark:text-slate-400"
             }`}
           >
-            {err.toFixed(2)}%
+            {err.toFixed(2)}%{" "}
+            <span className="text-[11px] font-bold">({count})</span>
           </span>
         </div>
       }
@@ -183,11 +195,16 @@ export const Error4xxRow = React.memo(function Error4xxRow({ ep }: { ep: Endpoin
   );
 });
 
-export const Error5xxRow = React.memo(function Error5xxRow({ ep }: { ep: Endpoint }) {
+export const Error5xxRow = React.memo(function Error5xxRow({
+  ep,
+}: {
+  ep: Endpoint;
+}) {
   const thresholds = useUIStore((state) => state.settings.thresholds);
   const err = ep.errorRate5xx ?? (ep as any).errorRate ?? 0;
   const hasError = err > 0;
   const isDegraded = err >= thresholds.error5xxDegraded;
+  const count = Math.round((err / 100) * ep.totalRequests);
 
   return (
     <BaseRow
@@ -204,15 +221,16 @@ export const Error5xxRow = React.memo(function Error5xxRow({ ep }: { ep: Endpoin
             5xx
           </span>
           <span
-            className={`text-xs sm:text-[12.5px] font-bold ${
+            className={`text-xs sm:text-[12.5px] font-bold flex items-center gap-1 ${
               isDegraded
                 ? "text-red-600 dark:text-red-400"
                 : hasError
                   ? "text-amber-600 dark:text-amber-400"
-                  : "text-slate-400 dark:text-slate-500"
+                  : "text-slate-500 dark:text-slate-400"
             }`}
           >
-            {err.toFixed(2)}%
+            {err.toFixed(2)}%{" "}
+            <span className="text-[11px] font-bold">({count})</span>
           </span>
         </div>
       }
@@ -220,7 +238,11 @@ export const Error5xxRow = React.memo(function Error5xxRow({ ep }: { ep: Endpoin
   );
 });
 
-export const FastLatencyRow = React.memo(function FastLatencyRow({ ep }: { ep: Endpoint }) {
+export const FastLatencyRow = React.memo(function FastLatencyRow({
+  ep,
+}: {
+  ep: Endpoint;
+}) {
   const lat = ep.latencyCurrentAvgMs ?? 0;
   return (
     <BaseRow

@@ -92,8 +92,12 @@ export function Header() {
       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         {/* Brand Logo & Name */}
         <div className="flex items-center gap-2.5 flex-shrink-0">
-          <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 dark:from-blue-600 dark:to-indigo-600 text-white shadow-md shadow-emerald-500/20 dark:shadow-blue-600/30 ring-1 ring-white/20 select-none">
-            <Activity className="h-4 w-4" />
+          <div className="relative flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden ring-1 ring-white/20 shadow-md select-none">
+            <img
+              src="/image-meme.png"
+              alt="Brand Logo"
+              className="w-full h-full object-cover"
+            />
             <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 dark:bg-cyan-400 ring-2 ring-white dark:ring-[#0b0f19]" />
           </div>
 
@@ -103,7 +107,7 @@ export function Header() {
                 ADSUN
               </span>
               <span className="text-[10px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:bg-blue-500/20 dark:text-blue-300 border border-emerald-500/20 dark:border-blue-500/30 select-none">
-                METRICS
+                DASHBOARD
               </span>
             </div>
             <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium hidden md:inline tracking-tight">
@@ -118,10 +122,10 @@ export function Header() {
             totalServers === 0
               ? "bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
               : isDegraded
-              ? "bg-amber-500/10 dark:bg-amber-950/40 border-amber-500/25 dark:border-amber-700/40 text-amber-800 dark:text-amber-300"
-              : !isAllHealthy
-              ? "bg-rose-500/10 dark:bg-rose-950/40 border-rose-500/25 dark:border-rose-700/40 text-rose-800 dark:text-rose-300"
-              : "bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-500/25 dark:border-emerald-700/40 text-emerald-800 dark:text-emerald-300"
+                ? "bg-amber-500/10 dark:bg-amber-950/40 border-amber-500/25 dark:border-amber-700/40 text-amber-800 dark:text-amber-300"
+                : !isAllHealthy
+                  ? "bg-rose-500/10 dark:bg-rose-950/40 border-rose-500/25 dark:border-rose-700/40 text-rose-800 dark:text-rose-300"
+                  : "bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-500/25 dark:border-emerald-700/40 text-emerald-800 dark:text-emerald-300"
           }`}
         >
           {/* Animated Radar Beacon */}
@@ -131,10 +135,10 @@ export function Header() {
                 totalServers === 0
                   ? "bg-slate-400"
                   : isDegraded
-                  ? "bg-amber-400"
-                  : !isAllHealthy
-                  ? "bg-rose-400"
-                  : "bg-emerald-400"
+                    ? "bg-amber-400"
+                    : !isAllHealthy
+                      ? "bg-rose-400"
+                      : "bg-emerald-400"
               }`}
             />
             <span
@@ -142,10 +146,10 @@ export function Header() {
                 totalServers === 0
                   ? "bg-slate-400"
                   : isDegraded
-                  ? "bg-amber-500"
-                  : !isAllHealthy
-                  ? "bg-rose-500"
-                  : "bg-emerald-500"
+                    ? "bg-amber-500"
+                    : !isAllHealthy
+                      ? "bg-rose-500"
+                      : "bg-emerald-500"
               }`}
             />
           </span>
@@ -157,7 +161,9 @@ export function Header() {
               : `${activeServers}/${totalServers} online`}
           </span>
 
-          <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">•</span>
+          <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">
+            •
+          </span>
 
           <span className="text-slate-600 dark:text-slate-400 font-mono text-[10.5px] hidden sm:inline whitespace-nowrap">
             {secondsAgo === 0 ? "just now" : `${secondsAgo}s ago`}

@@ -114,3 +114,46 @@ export const STATUS_OPTIONS: {
   { status: "offline", label: "Offline", color: STATUS_DOT_COLORS.offline },
 ];
 
+// ─── Queue Theme ─────────────────────────────────────────────────
+export interface QueueTheme {
+  headerBg: string;
+  borderColor: string;
+}
+
+export function getQueueTheme(total: number, warningThreshold: number, degradedThreshold: number): QueueTheme {
+  if (total < warningThreshold) {
+    return {
+      headerBg: "bg-emerald-500 dark:bg-emerald-700/90 text-white",
+      borderColor: "border-emerald-400 dark:border-emerald-800/80",
+    };
+  } else if (total < degradedThreshold) {
+    return {
+      headerBg: "bg-amber-500 dark:bg-amber-600/90 text-white",
+      borderColor: "border-amber-400 dark:border-amber-700/60",
+    };
+  } else {
+    return {
+      headerBg: "bg-rose-500 dark:bg-rose-700/90 text-white",
+      borderColor: "border-rose-400 dark:border-rose-800/60",
+    };
+  }
+}
+
+export function getQueueItemColor(
+  value: number,
+  warningThreshold: number,
+  degradedThreshold: number
+): string {
+  // Chia tỷ lệ threshold cho từng item riêng lẻ bằng 1/5 của Total Threshold
+  const itemWarning = Math.max(1, Math.floor(warningThreshold / 5));
+  const itemDegraded = Math.max(2, Math.floor(degradedThreshold / 5));
+
+  if (value < itemWarning) {
+    return "text-emerald-600 dark:text-emerald-400";
+  } else if (value < itemDegraded) {
+    return "text-amber-600 dark:text-amber-400";
+  } else {
+    return "text-rose-600 dark:text-rose-400";
+  }
+}
+

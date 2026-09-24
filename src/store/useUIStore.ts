@@ -27,6 +27,7 @@ export interface UIStoreState {
   settings: DashboardSettings;
   matrixFilter: TelemetryMatrixFilter;
   columnsFilter: ServerColumnsFilter;
+  visibleChartMetrics: string[];
 
   openModal: (modalName: keyof ModalState) => void;
   closeModal: (modalName: keyof ModalState) => void;
@@ -45,6 +46,7 @@ export interface UIStoreState {
       | Partial<ServerColumnsFilter>
       | ((prev: ServerColumnsFilter) => ServerColumnsFilter)
   ) => void;
+  setVisibleChartMetrics: (metrics: string[] | ((prev: string[]) => string[])) => void;
   resetMatrixFilter: () => void;
   resetColumnsFilter: () => void;
 }
@@ -71,10 +73,13 @@ export const useUIStore = create<UIStoreState>()(
           latencyDegraded: 1000,
           error5xxWarning: 1,
           error5xxDegraded: 5,
+          queueWarning: 50,
+          queueDegraded: 300,
         },
       },
       matrixFilter: defaultMatrixFilter,
       columnsFilter: defaultColumnsFilter,
+      visibleChartMetrics: ["cpu", "rps", "ram", "latency"],
 
       openModal: (modalName) =>
         set((state) => ({
@@ -111,11 +116,39 @@ export const useUIStore = create<UIStoreState>()(
               : { ...state.columnsFilter, ...filter },
         })),
 
+      setVisibleChartMetrics: (metrics) =>
+        set((state) => ({
+          visibleChartMetrics:
+            typeof metrics === "function"
+              ? metrics(state.visibleChartMetrics)
+              : metrics,
+        })),
+
       resetMatrixFilter: () => set({ matrixFilter: defaultMatrixFilter }),
       resetColumnsFilter: () => set({ columnsFilter: defaultColumnsFilter }),
     }),
     {
       name: "adsun-ui-store",
+      merge: (persistedState: any, currentState) => ({
+        ...currentState,
+        ...persistedState,
+        settings: {
+          ...currentState.settings,
+          ...persistedState?.settings,
+          thresholds: {
+            ...currentState.settings.thresholds,
+            ...persistedState?.settings?.thresholds,
+          },
+        },
+      }),
+      partialize: (state) => ({
+        // Chỉ lưu những config người dùng cài đặt, KHÔNG lưu trạng thái modal/editing đang mở
+        settings: state.settings,
+        matrixFilter: state.matrixFilter,
+        columnsFilter: state.columnsFilter,
+        visibleChartMetrics: state.visibleChartMetrics,
+        pollingInterval: state.pollingInterval,
+      }),
     },
   ),
 );

@@ -155,6 +155,8 @@ export function normalizeServerData(
     maxLatencyMs: data.summary.latencyMs.max,
     errorRate4xx: parseFloat(rate4xx.toFixed(2)),
     errorRate5xx: parseFloat(rate5xx.toFixed(2)),
+    errorCount4xx: counts.status4xx,
+    errorCount5xx: counts.status5xx,
     successRate: parseFloat(successRate.toFixed(2)),
   };
 

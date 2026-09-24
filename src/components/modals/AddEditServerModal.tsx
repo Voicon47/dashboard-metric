@@ -110,9 +110,6 @@ export function AddEditServerModal() {
     // 2. Rào điều kiện cho Base URL
     if (!form.baseUrl.trim()) {
       e.baseUrl = "Vui lòng nhập Endpoint Telemetry Base URL";
-    } else if (!/^https?:\/\/.+/.test(form.baseUrl.trim())) {
-      // Phải bắt đầu bằng http:// hoặc https://
-      e.baseUrl = "URL không hợp lệ. Phải bắt đầu bằng http:// hoặc https://";
     }
     setErrors(e);
     return Object.keys(e).length === 0;

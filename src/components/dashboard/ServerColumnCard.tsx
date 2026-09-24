@@ -22,11 +22,7 @@ import {
 import { useUIStore } from "../../store/useUIStore";
 import { useEndpointTopMetrics } from "../../hooks/useEndpointTopMetrics";
 import { QueueGauges } from "../queue/QueueGauges";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "../ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export interface ServerColumnCardProps {
   server: ServerNode;
@@ -96,53 +92,51 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
 
     if (endpointFilter.endpointMethod.length > 0) {
       list = list.filter((ep) =>
-        endpointFilter.endpointMethod.includes(ep.method)
+        endpointFilter.endpointMethod.includes(ep.method),
       );
     }
 
     return list;
   }, [server.endpoints, endpointFilter]);
 
-  const {
-    topLatency,
-    topRps,
-    top4xx,
-    top5xx,
-    topFast,
-  } = useEndpointTopMetrics(filteredEndpoints);
+  const { topLatency, topRps, top4xx, top5xx, topFast } =
+    useEndpointTopMetrics(filteredEndpoints);
 
   // Use real minLatencyMs for Fast Path header
   const minFast =
     topFast.length > 0
       ? (
-        topFast[0].minLatencyMs ??
-        topFast[0].latencyCurrentAvgMs ??
-        0
-      ).toFixed(1)
+          topFast[0].minLatencyMs ??
+          topFast[0].latencyCurrentAvgMs ??
+          0
+        ).toFixed(1)
       : "0";
 
   return (
     <div
-      className={`${isSingleServer
+      className={`${
+        isSingleServer
           ? "w-full min-w-0"
           : "flex-1 min-w-[310px] sm:min-w-[330px]"
-        } snap-center shrink-0 rounded-2xl p-4 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col ${isOffline
+      } snap-center shrink-0 rounded-2xl p-4 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col ${
+        isOffline
           ? "bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 opacity-70"
           : isDegraded
             ? "bg-[#fff8f8] dark:bg-[#1a0f16]/90 border border-[#fca5a5] dark:border-red-900/50"
             : "bg-white dark:bg-[#0b1120]/90 border border-slate-200 dark:border-slate-800/80"
-        }`}
+      }`}
     >
       {/* ── Column Top Header: Server Tag + Status Badge ── */}
       <div className="flex items-center justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-2 font-mono">
           <span
-            className={`font-bold text-sm sm:text-[15px] tracking-tight ${isOffline
+            className={`font-bold text-sm sm:text-[15px] tracking-tight ${
+              isOffline
                 ? "text-slate-500 dark:text-slate-400"
                 : isDegraded
                   ? "text-red-700 dark:text-red-400"
                   : "text-slate-900 dark:text-slate-100"
-              }`}
+            }`}
           >
             {server.name}
           </span>
@@ -163,8 +157,9 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
 
       {/* ── Sub-bar: Modern 4-Card Metric Grid ── */}
       <div
-        className={`grid grid-cols-4 ${isSingleServer ? "gap-2.5 sm:gap-3 p-2.5" : "gap-1.5 p-1.5"
-          } mb-3.5 bg-slate-50/80 dark:bg-slate-900/50 rounded-xl border border-slate-200/70 dark:border-slate-800/80 shadow-2xs`}
+        className={`grid grid-cols-4 ${
+          isSingleServer ? "gap-2.5 sm:gap-3 p-2.5" : "gap-1.5 p-1.5"
+        } mb-3.5 bg-slate-50/80 dark:bg-slate-900/50 rounded-xl border border-slate-200/70 dark:border-slate-800/80 shadow-2xs`}
       >
         {/* 1. CPU */}
         <Tooltip>
@@ -182,12 +177,13 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
                 {cpuVal}%
               </span>
               <span
-                className={`text-[9.5px] font-mono leading-none mt-1 ${isCpuDegraded
+                className={`text-[9.5px] font-mono font-semibold leading-none mt-1 ${
+                  isCpuDegraded
                     ? "text-red-500 dark:text-red-400"
                     : isCpuWarning
                       ? "text-amber-500 dark:text-amber-400"
                       : "text-emerald-600 dark:text-emerald-400"
-                  }`}
+                }`}
               >
                 {cpuStatus}
               </span>
@@ -198,7 +194,8 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
               CPU: {cpuVal}%
             </p>
             <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
-              Cảnh báo: &ge;{thresholds.cpuWarning}% | Quá tải: &ge;{thresholds.cpuDegraded}%
+              Cảnh báo: &ge;{thresholds.cpuWarning}% | Quá tải: &ge;
+              {thresholds.cpuDegraded}%
             </p>
           </TooltipContent>
         </Tooltip>
@@ -216,7 +213,7 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
               <span className="font-mono font-extrabold text-[13px] sm:text-sm tracking-tight leading-tight text-slate-800 dark:text-slate-100">
                 {ramVal}
               </span>
-              <span className="text-[9.5px] font-mono text-slate-400 dark:text-slate-500 leading-none mt-1 truncate max-w-full">
+              <span className="text-[9.5px] font-mono font-semibold text-slate-500 dark:text-slate-400 leading-none mt-1 truncate max-w-full">
                 {heapMb ? `${heapMb} heap` : "Heap OK"}
               </span>
             </div>
@@ -226,7 +223,10 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
               RAM: {ramVal}
             </p>
             <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
-              Managed Heap: {server.metrics.managedHeapMb ? `${server.metrics.managedHeapMb} MB` : "N/A"}
+              Managed Heap:{" "}
+              {server.metrics.managedHeapMb
+                ? `${server.metrics.managedHeapMb} MB`
+                : "N/A"}
             </p>
           </TooltipContent>
         </Tooltip>
@@ -244,7 +244,7 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
               <span className="font-mono font-extrabold text-[13px] sm:text-sm tracking-tight leading-tight text-blue-600 dark:text-blue-400">
                 {headerRps}
               </span>
-              <span className="text-[9.5px] font-mono text-slate-400 dark:text-slate-500 leading-none mt-1 truncate max-w-full">
+              <span className="text-[9.5px] font-mono font-semibold text-slate-500 dark:text-slate-400 leading-none mt-1 truncate max-w-full">
                 {headerTotalReqs} tổng
               </span>
             </div>
@@ -265,10 +265,11 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
             <div className="flex flex-col items-center justify-center p-1.5 rounded-lg bg-white dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-default text-center group min-w-0">
               <div className="flex items-center gap-1 mb-1">
                 <AlertOctagon
-                  className={`w-3 h-3 ${is5xxDegraded || is5xxWarning
+                  className={`w-3 h-3 ${
+                    is5xxDegraded || is5xxWarning
                       ? "text-red-500"
                       : "text-slate-400 dark:text-slate-500"
-                    } group-hover:text-amber-500 transition-colors`}
+                  } group-hover:text-amber-500 transition-colors`}
                 />
                 <span className="text-[10px] font-bold font-mono tracking-wider text-slate-400 dark:text-slate-500 uppercase">
                   5XX
@@ -279,14 +280,14 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
               >
                 {header5xx}%
               </span>
-              <span className="text-[9.5px] font-mono leading-none mt-1 truncate max-w-full">
+              <span className="text-[9.5px] font-mono font-semibold leading-none mt-1 truncate max-w-full">
                 {errorRate5xx === 0 ? (
                   <span className="text-emerald-600 dark:text-emerald-400">
                     0 lỗi
                   </span>
                 ) : (
                   <span className="text-red-500 dark:text-red-400">
-                    Có lỗi
+                    {server.metrics.errorCount5xx ?? 0} lỗi
                   </span>
                 )}
               </span>
@@ -297,18 +298,22 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
               Lỗi 5xx: {header5xx}%
             </p>
             <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
-              Cảnh báo: &ge;{thresholds.error5xxWarning}% | Nguy hiểm: &ge;{thresholds.error5xxDegraded}%
+              Cảnh báo: &ge;{thresholds.error5xxWarning}% | Nguy hiểm: &ge;
+              {thresholds.error5xxDegraded}%
             </p>
           </TooltipContent>
         </Tooltip>
       </div>
 
       <div
-        className={`flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar ${isSingleServer
+        className={`flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar ${
+          isSingleServer
             ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 [&>*]:mt-0"
             : "flex flex-col"
-          }`}
+        }`}
       >
+        {/* Section 6: Queue Monitor */}
+        <QueueGauges queues={server.queues} />
         {/* Section 1: Top Latency */}
         <MetricSection
           title="1. ĐỘ TRỄ RESPONSE (AVG)"
@@ -337,7 +342,7 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
         <MetricSection
           title="3.STATUSCODE 4XX"
           icon={<AlertTriangle className="w-3 h-3" />}
-          summary={`4xx Rate: ${(server.metrics.errorRate4xx ?? 0).toFixed(2)}%`}
+          summary={`4xx: ${(server.metrics.errorRate4xx ?? 0).toFixed(2)}% (${server.metrics.errorCount4xx ?? 0})`}
           themeColor="error4xx"
         >
           {top4xx.map((ep) => (
@@ -351,8 +356,8 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
           icon={<AlertOctagon className="w-3 h-3" />}
           summary={
             (server.metrics.errorRate5xx ?? 0) > 5
-              ? `${header5xx}% [CRIT]`
-              : `5xx: ${header5xx}% [TỐT]`
+              ? `${header5xx}% (${server.metrics.errorCount5xx ?? 0}) [CRIT]`
+              : `5xx: ${header5xx}% (${server.metrics.errorCount5xx ?? 0}) [TỐT]`
           }
           themeColor="error5xx"
         >
@@ -372,9 +377,6 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
             <FastLatencyRow key={`fast-${ep.id}`} ep={ep} />
           ))}
         </MetricSection>
-
-        {/* Section 6: Queue Monitor */}
-        <QueueGauges queues={server.queues} />
       </div>
     </div>
   );

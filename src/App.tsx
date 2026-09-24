@@ -23,6 +23,7 @@ import {
 import { useUIStore } from "./store/useUIStore";
 import { useServerStore } from "./store/useServerStore";
 import { serverApi } from "./api/serverApi";
+import { SystemOverviewChart } from "./components/charts/SystemOverviewChart";
 // ─── Inner App (has access to DashboardContext) ──────────────
 function DashboardApp() {
   const pollingInterval = useUIStore((state) => state.pollingInterval);
@@ -76,6 +77,10 @@ function DashboardApp() {
 
         {/* Section 3: Khu Vực Endpoint Theo Từng Server [CORE PIPELINE] */}
         <ServerColumnsMatrix />
+         {/* Section 4: Bổ sung biểu đồ phân tích (Tích hợp Highcharts) */}
+        <div className="mt-6">
+          <SystemOverviewChart />
+        </div>
       </main>
 
       {/* ─── Footer ─────────────────────────────────────────── */}

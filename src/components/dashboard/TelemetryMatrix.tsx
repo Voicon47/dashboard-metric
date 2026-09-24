@@ -49,7 +49,9 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
               ? "text-[#fbbf24]"
               : "text-[#4ade80]";
         return (
-          <span className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}>
+          <span
+            className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}
+          >
             {cpu.toFixed(1)}%
           </span>
         );
@@ -125,78 +127,41 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
         );
       },
     },
-    // 6. Avg Latency (ms)
+    // 6. Latency (Avg/Min/Max)
     {
       key: "latencyCurrentAvgMs",
-      label: "Avg Latency (ms)",
+      label: "Latency (Avg/Min/Max)",
       renderValue: (node) => {
         if (node.status === "offline")
           return <span className="text-slate-500 font-mono text-sm">—</span>;
-        const lat = node.metrics.latencyCurrentAvgMs;
+        const avg = node.metrics.latencyCurrentAvgMs ?? 0;
+        const min = node.metrics.minLatencyMs ?? avg;
+        const max = node.metrics.maxLatencyMs ?? avg;
         const color =
-          lat >= thresholds.latencyDegraded
+          avg >= thresholds.latencyDegraded
             ? "text-[#f87171]"
-            : lat >= thresholds.latencyWarning
+            : avg >= thresholds.latencyWarning
               ? "text-[#fbbf24]"
               : "text-[#4ade80]";
         return (
-          <span className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}>
-            {lat.toFixed(1)} ms
+          <span
+            className={`font-mono font-extrabold text-xs sm:text-sm ${color}`}
+          >
+            {avg.toFixed(1)} / {min.toFixed(1)} / {max.toFixed(1)} ms
           </span>
         );
       },
     },
-    // 7. Min Latency (ms)
-    {
-      key: "minLatencyMs",
-      label: "Min Latency (ms)",
-      renderValue: (node) => {
-        if (node.status === "offline")
-          return <span className="text-slate-500 font-mono text-sm">—</span>;
-        const minLat =
-          node.metrics.minLatencyMs ?? node.metrics.latencyCurrentAvgMs;
-        const color =
-          minLat >= thresholds.latencyDegraded
-            ? "text-[#f87171]"
-            : minLat >= thresholds.latencyWarning
-              ? "text-[#fbbf24]"
-              : "text-[#4ade80]";
-        return (
-          <span className={`font-mono font-medium text-xs sm:text-[13px] ${color}`}>
-            {minLat.toFixed(1)} ms
-          </span>
-        );
-      },
-    },
-    // 8. Max Latency (ms)
-    {
-      key: "maxLatencyMs",
-      label: "Max Latency (ms)",
-      renderValue: (node) => {
-        if (node.status === "offline")
-          return <span className="text-slate-500 font-mono text-sm">—</span>;
-        const maxLat =
-          node.metrics.maxLatencyMs ?? node.metrics.latencyCurrentAvgMs;
-        const color =
-          maxLat >= thresholds.latencyDegraded
-            ? "text-[#f87171]"
-            : maxLat >= thresholds.latencyWarning
-              ? "text-[#fbbf24]"
-              : "text-[#4ade80]";
-        return (
-          <span className={`font-mono font-medium text-xs sm:text-[13px] ${color}`}>
-            {maxLat.toFixed(1)} ms
-          </span>
-        );
-      },
-    },
+
     // 9. Success Rate (2xx/3xx)
     {
       key: "successRate",
       label: "Success Rate (2xx/3xx)",
       renderValue: (node) => {
         if (node.status === "offline")
-          return <span className="font-mono text-sm text-slate-500">0.00%</span>;
+          return (
+            <span className="font-mono text-sm text-slate-500">0.00%</span>
+          );
         const rate = node.metrics.successRate ?? 0;
         const color =
           rate < 96
@@ -205,7 +170,9 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
               ? "text-[#fbbf24]"
               : "text-[#4ade80]";
         return (
-          <span className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}>
+          <span
+            className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}
+          >
             {rate.toFixed(2)}%
           </span>
         );
@@ -219,10 +186,16 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
         if (node.status === "offline")
           return <span className="text-slate-500 font-mono text-sm">—</span>;
         const err4 = node.metrics.errorRate4xx ?? 0;
+        const count = node.metrics.errorCount4xx ?? 0;
         const color = err4 >= 5.0 ? "text-[#fbbf24]" : "text-[#4ade80]";
         return (
-          <span className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}>
-            {err4.toFixed(2)}%
+          <span
+            className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}
+          >
+            {err4.toFixed(2)}%{" "}
+            <span className="font-normal text-[11px] opacity-80">
+              ({count})
+            </span>
           </span>
         );
       },
@@ -235,6 +208,7 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
         if (node.status === "offline")
           return <span className="text-slate-500 font-mono text-sm">—</span>;
         const err = node.metrics.errorRate5xx ?? 0;
+        const count = node.metrics.errorCount5xx ?? 0;
         const color =
           err >= thresholds.error5xxDegraded
             ? "text-[#f87171]"
@@ -242,8 +216,42 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
               ? "text-[#fbbf24]"
               : "text-[#4ade80]";
         return (
-          <span className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}>
-            {err.toFixed(2)}%
+          <span
+            className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}
+          >
+            {err.toFixed(2)}%{" "}
+            <span className="font-normal text-[11px] opacity-80">
+              ({count})
+            </span>
+          </span>
+        );
+      },
+    },
+    // 12. Total Queue
+    {
+      key: "totalQueue",
+      label: "Total Queue",
+      renderValue: (node) => {
+        if (node.status === "offline")
+          return <span className="text-slate-500 font-mono text-sm">—</span>;
+        if (!node.queues)
+          return <span className="text-slate-500 font-mono text-sm">—</span>;
+
+        const q = node.queues;
+        const total =
+          q.Image +
+          q.Video +
+          q.CameraDebugLog +
+          q.ErrorImageLog +
+          q.EventAI +
+          q.AIConfig;
+
+        return (
+          <span className="font-mono font-bold text-xs sm:text-sm tracking-tight text-slate-800 dark:text-slate-200">
+            {total}{" "}
+            <span className="text-slate-500 text-[11px] font-normal">
+              ({q.Image} - {q.Video})
+            </span>
           </span>
         );
       },
@@ -251,7 +259,7 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
   ];
 
   const visibleRows = rows.filter(
-    (row) => !matrixFilter.hiddenMetricKeys.includes(row.key)
+    (row) => !matrixFilter.hiddenMetricKeys.includes(row.key),
   );
 
   return (
@@ -304,14 +312,17 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
                         >
                           {node.status}
                         </Badge>
-                        <span className="text-xs sm:text-sm font-bold tracking-tight">{node.name}</span>
+                        <span className="text-xs sm:text-sm font-bold tracking-tight">
+                          {node.name}
+                        </span>
                       </div>
                       {node.roleDescription && (
                         <div
-                          className={`text-[11px] font-normal italic lowercase mt-0.5 ${isOffline
+                          className={`text-[11px] font-normal italic lowercase mt-0.5 ${
+                            isOffline
                               ? "text-red-600 dark:text-[#f87171]"
                               : "text-slate-500 dark:text-slate-400"
-                            }`}
+                          }`}
                         >
                           {node.roleDescription}
                         </div>
@@ -331,7 +342,8 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
                   colSpan={Math.max(1, visibleServers.length + 1)}
                   className="px-3.5 py-8 text-center text-slate-400 italic text-xs"
                 >
-                  Không có metric nào được chọn để hiển thị. Vui lòng bật lại các hàng trong bộ lọc.
+                  Không có metric nào được chọn để hiển thị. Vui lòng bật lại
+                  các hàng trong bộ lọc.
                 </td>
               </tr>
             ) : visibleServers.length === 0 ? (

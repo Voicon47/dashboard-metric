@@ -45,7 +45,7 @@ export function ServerColumnsMatrix({ className }: ServerColumnsMatrixProps = {}
             </h2>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:block">
-            Hiển thị tự nhiên độ dài các endpoint riêng biệt của mỗi node. Phân
+            Hiển thị thông tin enpoints của từng server. Phân
             loại chi tiết theo Độ trễ, RPS, và Tỉ lệ lỗi.
           </p>
         </div>

@@ -123,7 +123,7 @@ export function ColumnsFilterBar({ servers }: ColumnsFilterBarProps) {
         <DropdownMenuContent align="start" className="w-52">
           <div className="flex items-center justify-between px-2 py-1.5">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Chọn Server Cards
+              Chọn Server
             </span>
             <button
               onClick={() => setColumnsFilter({ serverIds: [] })}
@@ -186,7 +186,7 @@ export function ColumnsFilterBar({ servers }: ColumnsFilterBarProps) {
         <DropdownMenuContent align="start" className="w-48">
           <div className="flex items-center justify-between px-2 py-1.5">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Trạng thái Node
+              Trạng thái
             </span>
             <button
               onClick={() => setColumnsFilter({ serverStatus: [] })}
