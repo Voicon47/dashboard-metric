@@ -44,6 +44,7 @@ import {
   formatBandwidth,
   formatDateTime,
 } from "../../utils/formatters";
+import { formatCompactNumber } from "../../utils/formatUtils";
 import { getMetricTextClass } from "../../utils/statusColor";
 import { LATENCY_THRESHOLD } from "../../constants";
 import type { Endpoint, ServerNode } from "../../types";
@@ -195,7 +196,7 @@ export function ServerDetailModal() {
               {
                 icon: <Network className="h-4 w-4" />,
                 label: "Total Reqs",
-                value: m.totalRequests >= 1000 ? `${(m.totalRequests / 1000).toFixed(1)}k` : `${m.totalRequests}`,
+                value: formatCompactNumber(m.totalRequests),
                 className: "text-muted-foreground",
               },
               {

@@ -19,6 +19,36 @@ export function ServerColumnsMatrix({ className }: ServerColumnsMatrixProps = {}
   const allServers = useServerStore((state) => state.servers);
   const columnsFilter = useUIStore((state) => state.columnsFilter);
 
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY === 0) return;
+
+      const isAtLeft = el.scrollLeft <= 0;
+      const isAtRight = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
+
+      const isScrollingLeft = e.deltaY < 0;
+      const isScrollingRight = e.deltaY > 0;
+
+      // Allow vertical scroll if we are at the horizontal edges
+      if ((isAtLeft && isScrollingLeft) || (isAtRight && isScrollingRight)) {
+        return;
+      }
+
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, []);
+
   // 1. Filter servers by ID
   const visibleServers =
     columnsFilter.serverIds.length > 0
@@ -65,7 +95,10 @@ export function ServerColumnsMatrix({ className }: ServerColumnsMatrixProps = {}
           </p>
         </div>
       ) : (
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3.5 pb-4 custom-scrollbar w-full">
+        <div 
+          ref={scrollRef}
+          className="flex overflow-x-auto gap-3.5 pb-4 custom-scrollbar w-full"
+        >
           {filteredServers.map((server) => (
             <ServerColumnCard
               key={server.id}

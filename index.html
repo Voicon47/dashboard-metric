@@ -1,35 +1,34 @@
 <!doctype html>
 <html lang="en" class="light">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/public/image-meme.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ADSUN Dashboard</title>
-    <meta
-      name="description"
-      content="Real-time infrastructure monitoring dashboard for ADSUN Media — track CPU, RAM, latency, RPS, and server health across all nodes."
-    />
-    <meta name="theme-color" content="#0F172A" />
-    <meta property="og:title" content="ADSUN Dashboard" />
-    <meta
-      property="og:description"
-      content="Real-time server monitoring with Prometheus export, jitter simulation, and multi-region node management."
-    />
-    <script>
-      (function () {
-        try {
-          var stored = localStorage.getItem("adsun-theme-mode");
-          var theme = stored === "dark" ? "dark" : "light";
-          document.documentElement.classList.remove("dark", "light");
-          document.documentElement.classList.add(theme);
-        } catch (e) {
-          document.documentElement.classList.add("light");
-        }
-      })();
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/image-meme.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADSUN Dashboard</title>
+  <meta name="description"
+    content="Real-time infrastructure monitoring dashboard for ADSUN Media — track CPU, RAM, latency, RPS, and server health across all nodes." />
+  <meta name="theme-color" content="#0F172A" />
+  <meta property="og:title" content="ADSUN Dashboard" />
+  <meta property="og:description"
+    content="Real-time server monitoring with Prometheus export, jitter simulation, and multi-region node management." />
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("adsun-theme-mode");
+        var theme = stored === "dark" ? "dark" : "light";
+        document.documentElement.classList.remove("dark", "light");
+        document.documentElement.classList.add(theme);
+      } catch (e) {
+        document.documentElement.classList.add("light");
+      }
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

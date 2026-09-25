@@ -9,7 +9,6 @@ export function calculateServerStatus(
   thresholds: ThresholdSettings,
   currentStatus: ServerStatus
 ): ServerStatus {
-  if (currentStatus === "offline") return "offline";
 
   const cpu = metrics.cpuPercent ?? 0;
   const latency = metrics.latencyCurrentAvgMs ?? 0;

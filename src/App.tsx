@@ -24,11 +24,29 @@ import { useUIStore } from "./store/useUIStore";
 import { useServerStore } from "./store/useServerStore";
 import { serverApi } from "./api/serverApi";
 import { SystemOverviewChart } from "./components/charts/SystemOverviewChart";
+// ─── Responsive Desktop Hook ──────────────────────────────────
+function useIsDesktop(breakpoint = 1024) {
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= breakpoint : true
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= breakpoint);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [breakpoint]);
+
+  return isDesktop;
+}
+
 // ─── Inner App (has access to DashboardContext) ──────────────
 function DashboardApp() {
   const pollingInterval = useUIStore((state) => state.pollingInterval);
   const theme = useUIStore((state) => state.settings?.theme || "light");
   const forceSync = useServerStore((state) => state.forceSync);
+  const isDesktop = useIsDesktop(1024);
 
   useEffect(() => {
     if (!pollingInterval || pollingInterval <= 0) return;
@@ -49,42 +67,48 @@ function DashboardApp() {
 
       {/* ─── Main Content ───────────────────────────────────── */}
       <main className="flex-1 w-full max-w-[1780px] mx-auto px-3 sm:px-5 py-3">
-        {/* Section 1 & 2: Resizable Horizontal Split (ServerConfigTable + TelemetryMatrix) */}
+        {/* Section 1 & 2: Resizable Horizontal Split (Desktop) / Stacked (Mobile/Tablet) */}
         <div className="mb-4">
-          <ResizablePanelGroup
-            direction="horizontal"
-            autoSaveId="adsun-table-matrix-split"
-            className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white/30 dark:bg-[#0c101d]/30 shadow-xs min-h-[460px] items-stretch"
-          >
-            {/* Left Panel: ServerConfigTable */}
-            <ResizablePanel defaultSize={35} minSize={20} maxSize={55} className="min-w-0">
-              <div className="h-full p-2">
-                <ServerConfigTable />
-              </div>
-            </ResizablePanel>
+          {isDesktop ? (
+            <ResizablePanelGroup
+              direction="horizontal"
+              autoSaveId="adsun-table-matrix-split"
+              className="gap-2.5 h-[510px] max-h-[510px] items-stretch"
+            >
+              {/* Left Panel: ServerConfigTable (Scroll DỌC only, equal height) */}
+              <ResizablePanel defaultSize={35} minSize={22} maxSize={55} className="min-w-0 h-full max-h-[510px] overflow-hidden flex flex-col">
+                <ServerConfigTable className="h-full max-h-[510px]" />
+              </ResizablePanel>
 
-            {/* Vertical Drag Handle */}
-            <ResizableHandle withHandle />
+              {/* Vertical Drag Handle */}
+              <ResizableHandle
+                withHandle
+                className="bg-transparent hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full w-2 transition-colors cursor-col-resize"
+              />
 
-            {/* Right Panel: TelemetryMatrix */}
-            <ResizablePanel defaultSize={65} minSize={45} className="min-w-0">
-              <div className="h-full p-2">
-                <TelemetryMatrix />
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+              {/* Right Panel: TelemetryMatrix (Scroll NGANG only, equal height) */}
+              <ResizablePanel defaultSize={65} minSize={45} className="min-w-0 h-full max-h-[510px] overflow-hidden flex flex-col">
+                <TelemetryMatrix className="h-full max-h-[510px]" />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <ServerConfigTable className="h-[510px] max-h-[510px]" />
+              <TelemetryMatrix className="h-[510px] max-h-[510px]" />
+            </div>
+          )}
         </div>
 
         {/* Section 3: Khu Vực Endpoint Theo Từng Server [CORE PIPELINE] */}
         <ServerColumnsMatrix />
-         {/* Section 4: Bổ sung biểu đồ phân tích (Tích hợp Highcharts) */}
+        {/* Section 4: Bổ sung biểu đồ phân tích (Tích hợp Highcharts) */}
         <div className="mt-6">
           <SystemOverviewChart />
         </div>
       </main>
 
       {/* ─── Footer ─────────────────────────────────────────── */}
-      <Footer />
+      {/* <Footer /> */}
 
       {/* ─── Modals ─────────────────────────────────────────── */}
       <ServerDetailModal />

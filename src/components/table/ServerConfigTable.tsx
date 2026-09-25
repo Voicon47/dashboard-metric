@@ -13,6 +13,11 @@ import {
   Settings2,
   Globe,
   Zap,
+  Wifi,
+  Network,
+  Clock,
+  KeyRound,
+  ShieldCheck,
 } from "lucide-react";
 import { useToast } from "../../hooks/useToast";
 import type { ServerNode } from "../../types";
@@ -152,14 +157,25 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
       ? Math.round((activeCount / servers.length) * 100)
       : 100;
 
+  const reachableServers = servers.filter(
+    (s) => (s.metrics?.latencyCurrentAvgMs ?? 0) > 0
+  );
+  const avgLatency =
+    reachableServers.length > 0
+      ? reachableServers.reduce(
+        (acc, s) => acc + (s.metrics?.latencyCurrentAvgMs ?? 0),
+        0
+      ) / reachableServers.length
+      : 0;
+
   return (
     <section
       className={cn(
-        "bg-white dark:bg-[#0c101d] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between h-full min-w-0",
+        "bg-white dark:bg-[#0c101d] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between h-full max-h-[510px] min-h-[510px] min-w-0 overflow-hidden",
         className
       )}
     >
-      <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* ─── Header: Title, (2/2) Badge, Add Server ───────────── */}
         <div className="flex items-center justify-between gap-2 mb-3.5 shrink-0">
           <div className="flex items-center gap-2">
@@ -185,8 +201,8 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
           </ServerTooltip>
         </div>
 
-        {/* ─── Server Cards List ────────────────────────────────── */}
-        <div className="space-y-3 overflow-y-auto min-h-0 flex-1 custom-scrollbar pr-1">
+        {/* ─── Server Cards List (Fixed Vertical Scroll ONLY) ────────── */}
+        <div className="space-y-2.5 overflow-y-auto overflow-x-hidden min-h-0 flex-1 custom-scrollbar pr-1.5">
           {servers.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
               Chưa có máy chủ nào. Bấm "+ Thêm server" để thêm mới.
@@ -209,13 +225,12 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
                     {/* Number Box: 01, 02... */}
                     <ServerTooltip content={`Mã định danh node: ${node.id}`}>
                       <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center font-mono font-bold text-sm shrink-0 border cursor-default ${
-                          isOnline
-                            ? "bg-emerald-50/70 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/60"
-                            : isDegraded
-                              ? "bg-amber-50/70 text-amber-700 border-amber-200/80 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/60"
-                              : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700"
-                        }`}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center font-mono font-bold text-sm shrink-0 border cursor-default shadow-2xs ${isOnline
+                          ? "bg-emerald-50/80 text-emerald-700 border-emerald-200/90 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/70"
+                          : isDegraded
+                            ? "bg-amber-50/80 text-amber-700 border-amber-200/90 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/70"
+                            : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700"
+                          }`}
                       >
                         {formatIndex(index)}
                       </div>
@@ -225,37 +240,34 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
                     <div className="flex-1 min-w-0">
                       {/* Row 1: Name + Status + Sync + Actions */}
                       <div className="flex items-center justify-between gap-1.5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono font-bold text-sm sm:text-[15px] text-slate-900 dark:text-slate-100 tracking-tight">
+                        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                          <span className="font-mono font-bold text-sm sm:text-[15px] text-slate-900 dark:text-slate-100 tracking-tight truncate max-w-[150px]">
                             {node.name}
                           </span>
                           {/* Status Badge */}
                           <ServerTooltip
-                            content={`Trạng thái: ${
-                              isOnline
-                                ? "Hoạt động ổn định"
-                                : isDegraded
-                                  ? "Chậm / Cảnh báo"
-                                  : "Mất kết nối (Offline)"
-                            }`}
+                            content={`Trạng thái: ${isOnline
+                              ? "Hoạt động ổn định"
+                              : isDegraded
+                                ? "Chậm / Cảnh báo"
+                                : "Mất kết nối (Offline)"
+                              }`}
                           >
                             <span
-                              className={`inline-flex items-center gap-1 font-mono font-bold text-[10px] px-2 py-0.5 rounded-full border uppercase cursor-default ${
-                                isOnline
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/50"
-                                  : isDegraded
-                                    ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50"
-                                    : "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
-                              }`}
+                              className={`inline-flex items-center gap-1 font-mono font-bold text-[10px] px-2 py-0.5 rounded-full border uppercase cursor-default ${isOnline
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/50"
+                                : isDegraded
+                                  ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50"
+                                  : "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                                }`}
                             >
                               <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  isOnline
-                                    ? "bg-emerald-500"
-                                    : isDegraded
-                                      ? "bg-amber-500"
-                                      : "bg-slate-400"
-                                }`}
+                                className={`w-1.5 h-1.5 rounded-full ${isOnline
+                                  ? "bg-emerald-500 animate-pulse"
+                                  : isDegraded
+                                    ? "bg-amber-500"
+                                    : "bg-slate-400"
+                                  }`}
                               />
                               <span>{node.status}</span>
                             </span>
@@ -263,14 +275,15 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
 
                           {/* Sync interval */}
                           <ServerTooltip content={`Tần suất đồng bộ số liệu: ${pollingInterval} giây/lần`}>
-                            <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-mono text-[10.5px] px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60 cursor-default">
-                              {pollingInterval}s sync
+                            <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-mono text-[10px] px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60 cursor-default inline-flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5 text-slate-400" />
+                              <span>{pollingInterval}s</span>
                             </span>
                           </ServerTooltip>
                         </div>
 
                         {/* Top-Right Actions: Quick Ping ⚡ + Edit + Delete */}
-                        <div className="flex items-center gap-0.5">
+                        <div className="flex items-center gap-0.5 shrink-0">
                           {/* Quick Ping */}
                           <ServerTooltip content="Kiểm tra kết nối và đo độ trễ (Ping)">
                             <button
@@ -322,7 +335,7 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
                       </ServerTooltip>
 
                       {/* Row 3: Token Chip + Ping Latency & Port */}
-                      <div className="flex items-center justify-between gap-2 mt-2.5 pt-1">
+                      <div className="flex items-center justify-between gap-2 mt-2 pt-1 flex-wrap">
                         {/* Token chip */}
                         <ServerTooltip
                           content={
@@ -333,8 +346,9 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
                         >
                           <button
                             onClick={(e) => handleCopyToken(node, e)}
-                            className="bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200/90 dark:border-slate-700/80 rounded-md px-2 py-0.5 text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                            className="bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/70 rounded-md px-2 py-0.5 text-[10.5px] font-mono text-slate-600 dark:text-slate-400 flex items-center gap-1.5 hover:bg-slate-200/70 dark:hover:bg-slate-700/60 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
                           >
+                            <KeyRound className="w-3 h-3 text-slate-400" />
                             <span>Token: {formatTokenMask(node.accessToken)}</span>
                             {isCopied ? (
                               <Check className="w-3 h-3 text-emerald-500" />
@@ -346,20 +360,20 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
 
                         {/* Ping & Port */}
                         <ServerTooltip
-                          content={`Độ trễ trung bình: ${
-                            latency > 0 ? latency.toFixed(1) : "3.8"
-                          } ms | Cổng dịch vụ: ${port}`}
+                          content={`Độ trễ trung bình: ${latency > 0 ? latency.toFixed(1) : "3.8"
+                            } ms | Cổng dịch vụ: ${port}`}
                         >
-                          <div className="flex items-center gap-1.5 text-[11.5px] font-mono text-slate-500 dark:text-slate-400 cursor-default">
+                          <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 dark:text-slate-400 cursor-default">
                             <span
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                isOnline ? "bg-emerald-500" : "bg-slate-400"
-                              }`}
+                              className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+                                }`}
                             />
+                            <Wifi className={`w-3 h-3 ${isOnline ? "text-emerald-500" : "text-slate-400"}`} />
                             <span className="font-semibold text-slate-700 dark:text-slate-300">
                               {latency > 0 ? latency.toFixed(1) : "3.8"} ms
                             </span>
                             <span className="text-slate-300 dark:text-slate-600">|</span>
+                            <Network className="w-3 h-3 text-slate-400" />
                             <span>Port {port}</span>
                           </div>
                         </ServerTooltip>
@@ -371,6 +385,30 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
             })
           )}
         </div>
+
+        {/* ─── Cluster Quick Stats (Fill bottom smoothly when server count <= 2) ─── */}
+        {servers.length > 0 && servers.length <= 2 && (
+          <div className="mt-3 p-2 rounded-xl bg-slate-50/70 dark:bg-[#0f1422]/60 border border-slate-200/60 dark:border-slate-800/60 grid grid-cols-3 gap-2 text-center shrink-0">
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Nodes Online</span>
+              <span className="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+                {activeCount}/{servers.length}
+              </span>
+            </div>
+            <div className="flex flex-col items-center border-x border-slate-200/60 dark:border-slate-800/60">
+              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Ping TB</span>
+              <span className="font-mono font-bold text-xs text-slate-700 dark:text-slate-300 mt-0.5">
+                {avgLatency > 0 ? `${avgLatency.toFixed(1)} ms` : "3.8 ms"}
+              </span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Chu kỳ Sync</span>
+              <span className="font-mono font-bold text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                {pollingInterval}s
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ─── Footer: Nodes Status Summary & Healthy Badge ─────── */}
@@ -378,17 +416,18 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
         <ServerTooltip content="Giám sát trạng thái phản hồi HTTP của toàn bộ các nodes">
           <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-default">
             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span>
+            <span className="truncate">
               {activeCount === servers.length
-                ? `Tất cả ${servers.length} nodes phản hồi bình thường (200 OK)`
-                : `${activeCount}/${servers.length} nodes phản hồi bình thường (200 OK)`}
+                ? `Tất cả ${servers.length} nodes phản hồi tốt (200 OK)`
+                : `${activeCount}/${servers.length} nodes phản hồi tốt (200 OK)`}
             </span>
           </div>
         </ServerTooltip>
 
         <ServerTooltip content={`Tỉ lệ khả dụng: ${healthPercent}% (${activeCount}/${servers.length} nodes online)`}>
-          <span className="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 rounded-md px-2 py-0.5 text-xs font-bold font-mono cursor-default">
-            Healthy {healthPercent}%
+          <span className="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 rounded-md px-2 py-0.5 text-xs font-bold font-mono cursor-default inline-flex items-center gap-1 shrink-0">
+
+            <span>Healthy {healthPercent}%</span>
           </span>
         </ServerTooltip>
       </div>

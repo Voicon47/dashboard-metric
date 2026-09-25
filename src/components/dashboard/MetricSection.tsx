@@ -6,6 +6,7 @@ import {
   getMethodBadgeStyle,
   type MetricSectionThemeKey,
 } from "../../constants/metricTheme";
+import { formatCompactNumber } from "../../utils/formatUtils";
 
 // ─── Metric Section Wrapper ──────────────────────────────────────
 export interface MetricSectionProps {
@@ -138,8 +139,7 @@ export const LatencyRow = React.memo(function LatencyRow({
 });
 
 export const RpsRow = React.memo(function RpsRow({ ep }: { ep: Endpoint }) {
-  const formatRps = (val: number) =>
-    val >= 1000 ? `${(val / 1000).toFixed(1)}k req/s` : `${val} req/s`;
+  const formatRps = (val: number) => `${formatCompactNumber(val)} req/s`;
   const bwMb = (ep.rps * 0.12).toFixed(1);
   const bwLabel =
     Number(bwMb) > 1000

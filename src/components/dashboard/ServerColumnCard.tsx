@@ -23,6 +23,7 @@ import { useUIStore } from "../../store/useUIStore";
 import { useEndpointTopMetrics } from "../../hooks/useEndpointTopMetrics";
 import { QueueGauges } from "../queue/QueueGauges";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { formatCompactNumber, formatExactNumber } from "../../utils/formatUtils";
 
 export interface ServerColumnCardProps {
   server: ServerNode;
@@ -62,15 +63,8 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
     : null;
 
   // RPS Computations
-  const headerRps =
-    server.metrics.rps >= 1000
-      ? `${(server.metrics.rps / 1000).toFixed(1)}k`
-      : `${server.metrics.rps}`;
-
-  const headerTotalReqs =
-    server.metrics.totalRequests >= 1000
-      ? `${(server.metrics.totalRequests / 1000).toFixed(1)}k`
-      : `${server.metrics.totalRequests}`;
+  const headerRps = formatCompactNumber(server.metrics.rps);
+  const headerTotalReqs = formatCompactNumber(server.metrics.totalRequests);
 
   // 5XX Computations
   const errorRate5xx = server.metrics.errorRate5xx ?? 0;
@@ -118,7 +112,7 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
         isSingleServer
           ? "w-full min-w-0"
           : "flex-1 min-w-[310px] sm:min-w-[330px]"
-      } snap-center shrink-0 rounded-2xl p-4 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col ${
+      } shrink-0 rounded-2xl p-4 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col ${
         isOffline
           ? "bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 opacity-70"
           : isDegraded
@@ -251,10 +245,10 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
             <p className="font-semibold text-slate-900 dark:text-white">
-              RPS: {server.metrics.rps} req/giây
+              RPS: {formatExactNumber(server.metrics.rps)} req/giây
             </p>
             <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
-              Tổng số request: {server.metrics.totalRequests.toLocaleString()}
+              Tổng số request: {formatExactNumber(server.metrics.totalRequests)}
             </p>
           </TooltipContent>
         </Tooltip>
