@@ -32,14 +32,14 @@ export const MetricSection = React.memo(function MetricSection({
     >
       {/* Section Header */}
       <div
-        className={`flex items-center justify-between px-3 py-1.5 ${theme.headerBg} text-white select-none`}
+        className={`flex items-center justify-between gap-2 px-2.5 py-1.5 ${theme.headerBg} text-white select-none`}
       >
-        <div className="flex items-center gap-1.5 font-bold text-xs sm:text-[12px] uppercase tracking-wide">
+        <div className="flex items-center gap-1.5 font-bold text-[10.5px] sm:text-[11px] uppercase tracking-wide min-w-0 flex-1">
           <span className="shrink-0">{icon}</span>
-          <span>{title}</span>
+          <span className="truncate">{title}</span>
         </div>
         <div
-          className={`font-mono font-bold text-[10.5px] sm:text-[11px] px-2.5 py-0.5 rounded-md border border-white/20 text-white shadow-2xs ${theme.summaryBg}`}
+          className={`shrink-0 whitespace-nowrap font-mono font-bold text-[10px] sm:text-[10.5px] px-2 py-0.5 rounded-md border border-white/20 text-white shadow-2xs ${theme.summaryBg}`}
         >
           {summary}
         </div>
@@ -76,36 +76,64 @@ const BaseRow = React.memo(function BaseRow({
 }: BaseRowProps) {
   const methodStyle = getMethodBadgeStyle(ep.method);
 
+  const isSingleValue = rightPrimary && !rightSecondary && !badgeContent;
+
+  if (isSingleValue) {
+    return (
+      <div className="flex items-center justify-between gap-3 px-2.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span
+            className={`text-[9.5px] font-bold font-mono px-1.5 py-0.5 rounded uppercase leading-none shrink-0 ${methodStyle}`}
+          >
+            {ep.method}
+          </span>
+          <span
+            className="font-mono text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 font-semibold group-hover:text-black dark:group-hover:text-white truncate flex-1 text-left"
+            style={{ direction: "rtl" }}
+            title={ep.path}
+          >
+            &lrm;{ep.path}
+          </span>
+        </div>
+        <div className="flex items-center shrink-0">
+          <span
+            className={`font-mono font-bold text-xs sm:text-[13px] tracking-tight ${primaryColor}`}
+          >
+            {rightPrimary}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center justify-between px-2.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-      <div className="flex items-center gap-2 min-w-0 pr-2 flex-1">
+    <div className="flex flex-col gap-1.5 px-2.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+      <div className="flex items-center gap-2 min-w-0 w-full">
         <span
           className={`text-[9.5px] font-bold font-mono px-1.5 py-0.5 rounded uppercase leading-none shrink-0 ${methodStyle}`}
         >
           {ep.method}
         </span>
         <span
-          className="font-mono text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 font-semibold group-hover:text-black dark:group-hover:text-white truncate"
+          className="font-mono text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 font-semibold group-hover:text-black dark:group-hover:text-white truncate flex-1 text-left"
+          style={{ direction: "rtl" }}
           title={ep.path}
         >
-          {ep.path}
+          &lrm;{ep.path}
         </span>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {badgeContent}
+      <div className="flex items-center justify-between w-full pl-0.5 mt-0.5">
         {rightPrimary && (
-          <div className="flex flex-col items-end leading-[1.15]">
-            <span
-              className={`font-mono font-bold text-xs sm:text-[13px] tracking-tight ${primaryColor}`}
-            >
-              {rightPrimary}
-            </span>
-            {rightSecondary && (
-              <span className="font-mono text-[9.5px] sm:text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                {rightSecondary}
-              </span>
-            )}
-          </div>
+          <span
+            className={`font-mono font-bold text-xs sm:text-[13px] tracking-tight ${primaryColor}`}
+          >
+            {rightPrimary}
+          </span>
+        )}
+        {rightSecondary && (
+          <span className="font-mono text-xs sm:text-[13px] font-bold tracking-tight">
+            {rightSecondary}
+          </span>
         )}
       </div>
     </div>
@@ -121,6 +149,8 @@ export const LatencyRow = React.memo(function LatencyRow({
 }) {
   const thresholds = useUIStore((state) => state.settings.thresholds);
   const lat = ep.latencyCurrentAvgMs ?? (ep as any).latencyMs ?? 0;
+  const maxLat = ep.maxLatencyMs || Math.round(lat * 1.5);
+  
   const color =
     lat >= thresholds.latencyDegraded
       ? "text-red-600 dark:text-red-400"
@@ -128,30 +158,49 @@ export const LatencyRow = React.memo(function LatencyRow({
         ? "text-amber-600 dark:text-amber-400"
         : "text-slate-700 dark:text-slate-200";
 
+  const maxColor = 
+    maxLat >= thresholds.latencyDegraded
+      ? "text-red-600 dark:text-red-400"
+      : maxLat >= thresholds.latencyWarning
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-slate-700 dark:text-slate-200";
+
   return (
     <BaseRow
       ep={ep}
       primaryColor={color}
-      rightPrimary={`${lat.toFixed(1)}ms`}
-      rightSecondary={`(Max: ${(ep.maxLatencyMs || Math.round(lat * 1.5)).toFixed(2)}ms)`}
+      rightPrimary={
+        <div className="flex items-baseline gap-1">
+          <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">AVG</span>
+          <span>{lat.toFixed(1)}</span>
+          <span className="text-[9px] font-normal text-slate-500 dark:text-slate-400 ml-0.5">ms</span>
+        </div>
+      }
+      rightSecondary={
+        <div className="flex items-baseline gap-1">
+          <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">MAX</span>
+          <span className={maxColor}>{maxLat.toFixed(2)}</span>
+          <span className="text-[9px] font-normal text-slate-500 dark:text-slate-400 ml-0.5">ms</span>
+        </div>
+      }
     />
   );
 });
 
 export const RpsRow = React.memo(function RpsRow({ ep }: { ep: Endpoint }) {
-  const formatRps = (val: number) => `${formatCompactNumber(val)} req/s`;
-  const bwMb = (ep.rps * 0.12).toFixed(1);
-  const bwLabel =
-    Number(bwMb) > 1000
-      ? `${(Number(bwMb) / 1024).toFixed(1)} GB/s`
-      : `${bwMb} MB/s`;
-
+  const formatRps = (val: number) => formatCompactNumber(val);
+  
   return (
     <BaseRow
       ep={ep}
       primaryColor="text-slate-800 dark:text-slate-200"
-      rightPrimary={formatRps(ep.rps)}
-      // rightSecondary={`(${bwLabel})`}
+      rightPrimary={
+        <div className="flex items-baseline gap-1">
+          <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">AVG</span>
+          <span>{formatRps(ep.rps)}</span>
+          <span className="text-[9px] font-normal text-slate-500 dark:text-slate-400 ml-0.5">req/s</span>
+        </div>
+      }
     />
   );
 });
@@ -164,31 +213,23 @@ export const Error4xxRow = React.memo(function Error4xxRow({
   const err = ep.errorRate4xx ?? (ep as any).errorRate ?? 0;
   const hasError = err > 0;
   const count = Math.round((err / 100) * ep.totalRequests);
+  const color = hasError ? "text-[#c2410c] dark:text-orange-400" : "text-slate-700 dark:text-slate-300";
 
   return (
     <BaseRow
       ep={ep}
-      badgeContent={
-        <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
-          <span
-            className={`text-[9px] px-1.5 py-0.5 rounded leading-none ${
-              hasError
-                ? "bg-[#c2410c] text-white"
-                : "bg-slate-200 dark:bg-slate-700 text-slate-500"
-            }`}
-          >
-            4xx
-          </span>
-          <span
-            className={`text-xs sm:text-[12.5px] font-bold flex items-center gap-1 ${
-              hasError
-                ? "text-[#c2410c] dark:text-orange-400"
-                : "text-slate-500 dark:text-slate-400"
-            }`}
-          >
-            {err.toFixed(2)}%{" "}
-            <span className="text-[11px] font-bold">({count})</span>
-          </span>
+      primaryColor={color}
+      rightPrimary={
+        <div className="flex items-baseline gap-1">
+          <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">RATE</span>
+          <span>{err.toFixed(2)}</span>
+          <span className="text-[9px] font-normal text-slate-500 dark:text-slate-400 ml-0.5">%</span>
+        </div>
+      }
+      rightSecondary={
+        <div className="flex items-baseline gap-1">
+          <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">COUNT</span>
+          <span className={color}>{count}</span>
         </div>
       }
     />
@@ -205,33 +246,23 @@ export const Error5xxRow = React.memo(function Error5xxRow({
   const hasError = err > 0;
   const isDegraded = err >= thresholds.error5xxDegraded;
   const count = Math.round((err / 100) * ep.totalRequests);
+  const color = isDegraded ? "text-red-600 dark:text-red-400" : hasError ? "text-amber-600 dark:text-amber-400" : "text-slate-700 dark:text-slate-300";
 
   return (
     <BaseRow
       ep={ep}
-      badgeContent={
-        <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
-          <span
-            className={`text-[9px] px-1.5 py-0.5 rounded leading-none ${
-              hasError
-                ? "bg-[#b91c1c] text-white"
-                : "bg-slate-200 dark:bg-slate-700 text-slate-500"
-            }`}
-          >
-            5xx
-          </span>
-          <span
-            className={`text-xs sm:text-[12.5px] font-bold flex items-center gap-1 ${
-              isDegraded
-                ? "text-red-600 dark:text-red-400"
-                : hasError
-                  ? "text-amber-600 dark:text-amber-400"
-                  : "text-slate-500 dark:text-slate-400"
-            }`}
-          >
-            {err.toFixed(2)}%{" "}
-            <span className="text-[11px] font-bold">({count})</span>
-          </span>
+      primaryColor={color}
+      rightPrimary={
+        <div className="flex items-baseline gap-1">
+          <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">RATE</span>
+          <span>{err.toFixed(2)}</span>
+          <span className="text-[9px] font-normal text-slate-500 dark:text-slate-400 ml-0.5">%</span>
+        </div>
+      }
+      rightSecondary={
+        <div className="flex items-baseline gap-1">
+          <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">COUNT</span>
+          <span className={color}>{count}</span>
         </div>
       }
     />
@@ -244,12 +275,26 @@ export const FastLatencyRow = React.memo(function FastLatencyRow({
   ep: Endpoint;
 }) {
   const lat = ep.latencyCurrentAvgMs ?? 0;
+  const minLat = ep.minLatencyMs ?? lat;
+  
   return (
     <BaseRow
       ep={ep}
       primaryColor="text-slate-800 dark:text-slate-200"
-      rightPrimary={`${lat.toFixed(1)}ms`}
-      rightSecondary={`(Min: ${(ep.minLatencyMs ?? lat).toFixed(2)}ms)`}
+      rightPrimary={
+        <div className="flex items-baseline gap-1">
+          <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">AVG</span>
+          <span>{lat.toFixed(1)}</span>
+          <span className="text-[9px] font-normal text-slate-500 dark:text-slate-400 ml-0.5">ms</span>
+        </div>
+      }
+      rightSecondary={
+        <div className="flex items-baseline gap-1">
+          <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">MIN</span>
+          <span>{minLat.toFixed(2)}</span>
+          <span className="text-[9px] font-normal text-slate-500 dark:text-slate-400 ml-0.5">ms</span>
+        </div>
+      }
     />
   );
 });

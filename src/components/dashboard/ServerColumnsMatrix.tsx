@@ -10,6 +10,13 @@ import { useUIStore } from "../../store/useUIStore";
 import { ServerColumnCard } from "./ServerColumnCard";
 import { ColumnsFilterBar } from "../filters/ColumnsFilterBar";
 import { cn } from "../../lib/utils";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "../ui/carousel";
 
 interface ServerColumnsMatrixProps {
   className?: string;
@@ -19,35 +26,7 @@ export function ServerColumnsMatrix({ className }: ServerColumnsMatrixProps = {}
   const allServers = useServerStore((state) => state.servers);
   const columnsFilter = useUIStore((state) => state.columnsFilter);
 
-  const scrollRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onWheel = (e: WheelEvent) => {
-      if (e.deltaY === 0) return;
-
-      const isAtLeft = el.scrollLeft <= 0;
-      const isAtRight = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
-
-      const isScrollingLeft = e.deltaY < 0;
-      const isScrollingRight = e.deltaY > 0;
-
-      // Allow vertical scroll if we are at the horizontal edges
-      if ((isAtLeft && isScrollingLeft) || (isAtRight && isScrollingRight)) {
-        return;
-      }
-
-      e.preventDefault();
-      el.scrollLeft += e.deltaY;
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", onWheel);
-    };
-  }, []);
+  // Legacy scroll logic removed in favor of Shadcn Carousel
 
   // 1. Filter servers by ID
   const visibleServers =
@@ -95,19 +74,34 @@ export function ServerColumnsMatrix({ className }: ServerColumnsMatrixProps = {}
           </p>
         </div>
       ) : (
-        <div 
-          ref={scrollRef}
-          className="flex overflow-x-auto gap-3.5 pb-4 custom-scrollbar w-full"
+        <Carousel
+          opts={{
+            align: "start",
+            dragFree: true,
+          }}
+          className="w-full max-w-full"
         >
-          {filteredServers.map((server) => (
-            <ServerColumnCard
-              key={server.id}
-              server={server}
-              endpointFilter={columnsFilter}
-              serverCount={filteredServers.length}
-            />
-          ))}
-        </div>
+          {/* Sticky wrapper so buttons follow vertical scroll */}
+          <div 
+            className="sticky top-[50vh] z-50 h-0 w-full flex justify-between pointer-events-none" 
+            style={{ transform: 'translateY(-50%)' }}
+          >
+            <CarouselPrevious className="pointer-events-auto relative left-2 md:-left-4 top-0 translate-y-0 h-12 w-12 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 border-2 border-slate-200 dark:border-slate-700 shadow-[0_4px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_4px_25px_rgba(59,130,246,0.3)] hover:scale-110 transition-all duration-300 hidden md:flex" />
+            <CarouselNext className="pointer-events-auto relative right-2 md:-right-4 top-0 translate-y-0 h-12 w-12 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 border-2 border-slate-200 dark:border-slate-700 shadow-[0_4px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_4px_25px_rgba(59,130,246,0.3)] hover:scale-110 transition-all duration-300 hidden md:flex" />
+          </div>
+
+          <CarouselContent className="-ml-3.5 pb-4">
+            {filteredServers.map((server) => (
+              <CarouselItem key={server.id} className="pl-3.5 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+                <ServerColumnCard
+                  server={server}
+                  endpointFilter={columnsFilter}
+                  serverCount={filteredServers.length}
+                />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
       )}
     </section>
   );

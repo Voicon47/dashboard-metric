@@ -73,11 +73,11 @@ function DashboardApp() {
             <ResizablePanelGroup
               direction="horizontal"
               autoSaveId="adsun-table-matrix-split"
-              className="gap-2.5 h-[510px] max-h-[510px] items-stretch"
+              className="gap-2.5 h-[540px] max-h-[540px] items-stretch"
             >
               {/* Left Panel: ServerConfigTable (Scroll DỌC only, equal height) */}
-              <ResizablePanel defaultSize={35} minSize={22} maxSize={55} className="min-w-0 h-full max-h-[510px] overflow-hidden flex flex-col">
-                <ServerConfigTable className="h-full max-h-[510px]" />
+              <ResizablePanel defaultSize={35} minSize={22} maxSize={55} className="min-w-0 h-full max-h-[540px] min-h-0 overflow-hidden flex flex-col">
+                <ServerConfigTable className="h-full max-h-[540px] min-h-0 flex-1" />
               </ResizablePanel>
 
               {/* Vertical Drag Handle */}
@@ -87,14 +87,14 @@ function DashboardApp() {
               />
 
               {/* Right Panel: TelemetryMatrix (Scroll NGANG only, equal height) */}
-              <ResizablePanel defaultSize={65} minSize={45} className="min-w-0 h-full max-h-[510px] overflow-hidden flex flex-col">
-                <TelemetryMatrix className="h-full max-h-[510px]" />
+              <ResizablePanel defaultSize={65} minSize={45} className="min-w-0 h-full max-h-[540px] min-h-0 overflow-hidden flex flex-col">
+                <TelemetryMatrix className="h-full max-h-[540px] min-h-0 flex-1" />
               </ResizablePanel>
             </ResizablePanelGroup>
           ) : (
             <div className="flex flex-col gap-4">
-              <ServerConfigTable className="h-[510px] max-h-[510px]" />
-              <TelemetryMatrix className="h-[510px] max-h-[510px]" />
+              <ServerConfigTable className="h-[540px] max-h-[540px]" />
+              <TelemetryMatrix className="h-[540px] max-h-[540px]" />
             </div>
           )}
         </div>

@@ -35,13 +35,13 @@ import {
 import { useUIStore } from "../../store/useUIStore";
 import { useServerStore } from "../../store/useServerStore";
 import { serverApi } from "../../api/serverApi";
-import { cn } from "../../lib/utils";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
 } from "../ui/tooltip";
+import { cn } from "../../lib/utils";
 
 interface ServerTooltipProps {
   content: React.ReactNode;
@@ -171,7 +171,7 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
   return (
     <section
       className={cn(
-        "bg-white dark:bg-[#0c101d] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between h-full max-h-[510px] min-h-[510px] min-w-0 overflow-hidden",
+        "bg-white dark:bg-[#0c101d] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between h-full max-h-[540px] min-h-0 min-w-0 overflow-hidden flex-1",
         className
       )}
     >
@@ -202,7 +202,7 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
         </div>
 
         {/* ─── Server Cards List (Fixed Vertical Scroll ONLY) ────────── */}
-        <div className="space-y-2.5 overflow-y-auto overflow-x-hidden min-h-0 flex-1 custom-scrollbar pr-1.5">
+        <div className="space-y-2.5 overflow-y-auto overflow-x-hidden min-h-0 flex-1 custom-scrollbar pr-1.5 overscroll-contain">
           {servers.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
               Chưa có máy chủ nào. Bấm "+ Thêm server" để thêm mới.
@@ -361,7 +361,7 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
                         {/* Ping & Port */}
                         <ServerTooltip
                           content={`Độ trễ trung bình: ${latency > 0 ? latency.toFixed(1) : "3.8"
-                            } ms | Cổng dịch vụ: ${port}`}
+                            } ms `}
                         >
                           <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 dark:text-slate-400 cursor-default">
                             <span
@@ -372,9 +372,9 @@ export function ServerConfigTable({ className }: ServerConfigTableProps = {}) {
                             <span className="font-semibold text-slate-700 dark:text-slate-300">
                               {latency > 0 ? latency.toFixed(1) : "3.8"} ms
                             </span>
-                            <span className="text-slate-300 dark:text-slate-600">|</span>
+                            {/* <span className="text-slate-300 dark:text-slate-600">|</span>
                             <Network className="w-3 h-3 text-slate-400" />
-                            <span>Port {port}</span>
+                            <span>Port {port}</span> */}
                           </div>
                         </ServerTooltip>
                       </div>

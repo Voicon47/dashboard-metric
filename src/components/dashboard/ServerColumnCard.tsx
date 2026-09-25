@@ -108,11 +108,7 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
 
   return (
     <div
-      className={`${
-        isSingleServer
-          ? "w-full min-w-0"
-          : "flex-1 min-w-[310px] sm:min-w-[330px]"
-      } shrink-0 rounded-2xl p-4 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col ${
+      className={`w-full h-full shrink-0 rounded-2xl p-4 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col ${
         isOffline
           ? "bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 opacity-70"
           : isDegraded
@@ -310,7 +306,7 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
         <QueueGauges queues={server.queues} />
         {/* Section 1: Top Latency */}
         <MetricSection
-          title="1. ĐỘ TRỄ RESPONSE (AVG)"
+          title="1. ĐỘ TRỄ (AVG)"
           icon={<Clock className="w-3 h-3" />}
           summary={`Max: ${(server.metrics.maxLatencyMs ?? 0).toFixed(2)}ms`}
           themeColor="latency"
@@ -322,7 +318,7 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
 
         {/* Section 2: Top RPS */}
         <MetricSection
-          title="2.TOP REQUEST"
+          title="2. TOP REQUEST"
           icon={<RotateCw className="w-3 h-3" />}
           summary={`${headerRps} rps`}
           themeColor="rps"
@@ -334,7 +330,7 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
 
         {/* Section 3: 4xx Errors */}
         <MetricSection
-          title="3.STATUSCODE 4XX"
+          title="3. LỖI 4XX"
           icon={<AlertTriangle className="w-3 h-3" />}
           summary={`4xx: ${(server.metrics.errorRate4xx ?? 0).toFixed(2)}% (${server.metrics.errorCount4xx ?? 0})`}
           themeColor="error4xx"
@@ -346,7 +342,7 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
 
         {/* Section 4: 5xx Errors */}
         <MetricSection
-          title="4.STATUSCODE 5XX"
+          title="4. LỖI 5XX"
           icon={<AlertOctagon className="w-3 h-3" />}
           summary={
             (server.metrics.errorRate5xx ?? 0) > 5
@@ -362,7 +358,7 @@ export const ServerColumnCard = React.memo(function ServerColumnCard({
 
         {/* Section 5: Fast Path */}
         <MetricSection
-          title="5. LOW LATENCY"
+          title="5. ĐỘ TRỄ THẤP"
           icon={<Zap className="w-3 h-3" />}
           summary={`${minFast}ms min`}
           themeColor="fastPath"

@@ -25,6 +25,22 @@ import { useUIStore } from "../../store/useUIStore";
 import { MatrixFilterBar } from "../filters/MatrixFilterBar";
 import { formatCompactNumber, formatExactNumber } from "../../utils/formatUtils";
 import { cn } from "../../lib/utils";
+import {
+  getMetricStatusColor,
+  getSuccessRateColor,
+  getError4xxColor,
+  getRequestVolumeColor,
+  getRamColor,
+  getHeapColor,
+  getRpsColor
+} from "../../constants/metricTheme";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "../ui/carousel";
 
 interface MetricRowDef {
   key: MetricRowKey;
@@ -43,35 +59,9 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
   const thresholds = useUIStore((state) => state.settings.thresholds);
   const matrixFilter = useUIStore((state) => state.matrixFilter);
 
-  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [hoveredRow, setHoveredRow] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onWheel = (e: WheelEvent) => {
-      if (e.deltaY === 0) return;
-
-      const isAtLeft = el.scrollLeft <= 0;
-      const isAtRight = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
-
-      const isScrollingLeft = e.deltaY < 0;
-      const isScrollingRight = e.deltaY > 0;
-
-      // Allow vertical scroll if we are at the horizontal edges
-      if ((isAtLeft && isScrollingLeft) || (isAtRight && isScrollingRight)) {
-        return;
-      }
-
-      e.preventDefault();
-      el.scrollLeft += e.deltaY;
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", onWheel);
-    };
-  }, []);
+  // Legacy scroll logic removed in favor of Carousel
 
   const visibleServers =
     matrixFilter.serverIds.length > 0
@@ -88,12 +78,7 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
         if (node.status === "offline")
           return <span className="text-slate-500 font-mono text-sm">—</span>;
         const cpu = node.metrics.cpuPercent;
-        const color =
-          cpu >= thresholds.cpuDegraded
-            ? "text-[#f87171]"
-            : cpu >= thresholds.cpuWarning
-              ? "text-[#fbbf24]"
-              : "text-[#4ade80]";
+        const color = getMetricStatusColor(cpu, thresholds.cpuWarning, thresholds.cpuDegraded);
         return (
           <span
             className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}
@@ -112,11 +97,12 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
         if (node.status === "offline")
           return <span className="text-slate-500 font-mono text-sm">—</span>;
 
-        const gb = (node.metrics.ramGB ?? 0).toFixed(1);
+        const gb = (node.metrics.ramGB ?? 0);
+        const colorClass = getRamColor(gb);
 
         return (
-          <span className="font-mono font-bold text-xs sm:text-sm tracking-tight text-slate-800 dark:text-slate-200">
-            {gb} GB
+          <span className={`font-mono font-bold text-xs sm:text-sm tracking-tight ${colorClass}`}>
+            {gb.toFixed(1)} GB
           </span>
         );
       },
@@ -130,16 +116,16 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
         if (node.status === "offline")
           return <span className="text-slate-500 font-mono text-sm">—</span>;
 
-        const heap = (node.metrics.managedHeapMb ?? 0).toFixed(1);
+        const heap = (node.metrics.managedHeapMb ?? 0);
+        const colorClass = getHeapColor(heap);
 
         return (
-          <span className="font-mono font-medium text-xs sm:text-[13px] text-slate-700 dark:text-slate-300">
-            {heap} MB
+          <span className={`font-mono font-medium text-xs sm:text-[13px] ${colorClass}`}>
+            {heap.toFixed(1)} MB
           </span>
         );
       },
     },
-    // 4. Total Requests
     {
       key: "totalRequests",
       label: "Total Requests",
@@ -149,11 +135,12 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
           return <span className="text-slate-500 font-mono text-sm">—</span>;
 
         const totalReq = node.metrics.totalRequests ?? 0;
-        
+        const colorClass = getRequestVolumeColor(totalReq);
+
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="font-mono font-bold text-xs sm:text-sm tracking-tight text-slate-800 dark:text-slate-200 cursor-help border-b border-dashed border-slate-300 dark:border-slate-600">
+              <span className={`font-mono font-bold text-xs sm:text-sm tracking-tight cursor-help border-b border-dashed border-slate-300 dark:border-slate-600 ${colorClass}`}>
                 {formatCompactNumber(totalReq)}
               </span>
             </TooltipTrigger>
@@ -173,10 +160,11 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
         if (node.status === "offline")
           return <span className="font-mono text-xs sm:text-sm text-slate-400 dark:text-slate-500">—</span>;
         const rps = node.metrics.rps ?? 0;
+        const colorClass = getRpsColor(rps);
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="font-mono font-bold text-xs sm:text-sm tracking-tight text-slate-700 dark:text-slate-300 cursor-help border-b border-dashed border-slate-300 dark:border-slate-600">
+              <span className={`font-mono font-bold text-xs sm:text-sm tracking-tight cursor-help border-b border-dashed border-slate-300 dark:border-slate-600 ${colorClass}`}>
                 {formatCompactNumber(rps)}
               </span>
             </TooltipTrigger>
@@ -198,18 +186,30 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
         const avg = node.metrics.latencyCurrentAvgMs ?? 0;
         const min = node.metrics.minLatencyMs ?? avg;
         const max = node.metrics.maxLatencyMs ?? avg;
-        const color =
-          avg >= thresholds.latencyDegraded
-            ? "text-[#f87171]"
-            : avg >= thresholds.latencyWarning
-              ? "text-[#fbbf24]"
-              : "text-[#4ade80]";
+        const color = getMetricStatusColor(avg, thresholds.latencyWarning, thresholds.latencyDegraded);
+        const displayMax = max >= 10000 ? formatCompactNumber(max) : max.toFixed(1);
         return (
-          <span
-            className={`font-mono font-extrabold text-xs sm:text-sm ${color}`}
-          >
-            {avg.toFixed(1)} / {min.toFixed(1)} / {max.toFixed(1)} ms
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className={`font-mono font-extrabold text-[11px] sm:text-[12px] tracking-tight cursor-help ${color}`}
+              >
+                {avg.toFixed(1)}
+                <span className="opacity-40 mx-px">/</span>
+                {min.toFixed(1)}
+                <span className="opacity-40 mx-px">/</span>
+                {displayMax}
+                <span className="text-[10px] ml-0.5 opacity-80 font-bold">ms</span>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="font-mono text-xs">
+              <div className="flex flex-col gap-0.5">
+                <div>Trung bình: {avg.toFixed(2)} ms</div>
+                <div>Tối thiểu: {min.toFixed(2)} ms</div>
+                <div>Tối đa: {formatExactNumber(max)} ms</div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
         );
       },
     },
@@ -225,12 +225,7 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
             <span className="font-mono text-xs sm:text-sm text-slate-400 dark:text-slate-500">—</span>
           );
         const rate = node.metrics.successRate ?? 0;
-        const color =
-          rate < 96
-            ? "text-[#f87171]"
-            : rate < 99
-              ? "text-[#fbbf24]"
-              : "text-[#4ade80]";
+        const color = getSuccessRateColor(rate);
         return (
           <span
             className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}
@@ -250,7 +245,7 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
           return <span className="text-slate-500 font-mono text-sm">—</span>;
         const err4 = node.metrics.errorRate4xx ?? 0;
         const count = node.metrics.errorCount4xx ?? 0;
-        const color = err4 >= 5.0 ? "text-[#fbbf24]" : "text-[#4ade80]";
+        const color = getError4xxColor(err4);
         return (
           <span
             className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}
@@ -273,12 +268,7 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
           return <span className="text-slate-500 font-mono text-sm">—</span>;
         const err = node.metrics.errorRate5xx ?? 0;
         const count = node.metrics.errorCount5xx ?? 0;
-        const color =
-          err >= thresholds.error5xxDegraded
-            ? "text-[#f87171]"
-            : err >= thresholds.error5xxWarning
-              ? "text-[#fbbf24]"
-              : "text-[#4ade80]";
+        const color = getMetricStatusColor(err, thresholds.error5xxWarning, thresholds.error5xxDegraded);
         return (
           <span
             className={`font-mono font-extrabold text-xs sm:text-sm tracking-tight ${color}`}
@@ -304,29 +294,31 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
 
         const q = node.queues;
         const total =
-          q.Image +
-          q.Video +
-          q.CameraDebugLog +
-          q.ErrorImageLog +
-          q.EventAI +
-          q.AIConfig;
+          (q.Image || 0) +
+          (q.Video || 0) +
+          (q.CameraDebugLog || 0) +
+          (q.ErrorImageLog || 0) +
+          (q.EventAI || 0) +
+          (q.AIConfig || 0);
+
+        const colorClass = getMetricStatusColor(total, thresholds.queueWarning, thresholds.queueDegraded);
 
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="font-mono font-bold text-xs sm:text-sm tracking-tight text-slate-800 dark:text-slate-200 cursor-help border-b border-dashed border-slate-300 dark:border-slate-600">
+              <span className={`font-mono font-bold text-xs sm:text-sm tracking-tight cursor-help border-b border-dashed border-slate-300 dark:border-slate-600 ${colorClass}`}>
                 {formatCompactNumber(total)}{" "}
-                <span className="text-slate-500 text-[11px] font-normal border-none">
-                  ({formatCompactNumber(q.Image)} - {formatCompactNumber(q.Video)})
+                <span className="opacity-80 text-[11px] font-normal border-none">
+                  ({formatCompactNumber(q.Image || 0)} - {formatCompactNumber(q.Video || 0)})
                 </span>
               </span>
             </TooltipTrigger>
             <TooltipContent className="font-mono text-xs">
               <div className="flex flex-col gap-1">
                 <div>Total: {formatExactNumber(total)}</div>
-                <div className="text-slate-400">Image: {formatExactNumber(q.Image)}</div>
-                <div className="text-slate-400">Video: {formatExactNumber(q.Video)}</div>
-                <div className="text-slate-400">EventAI: {formatExactNumber(q.EventAI)}</div>
+                <div className="text-slate-400">Image: {formatExactNumber(q.Image || 0)}</div>
+                <div className="text-slate-400">Video: {formatExactNumber(q.Video || 0)}</div>
+                <div className="text-slate-400">EventAI: {formatExactNumber(q.EventAI || 0)}</div>
               </div>
             </TooltipContent>
           </Tooltip>
@@ -340,21 +332,23 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
   );
 
   return (
-    <section
+    <Carousel
+      opts={{
+        align: "start",
+        containScroll: "trimSnaps",
+        loop: false,
+      }}
       className={cn(
-        "bg-white dark:bg-[#0c101d] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-start h-full max-h-[510px] min-h-[510px] min-w-0 overflow-hidden",
+        "bg-white dark:bg-[#0c101d] rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-start h-full max-h-[540px] min-h-0 min-w-0 overflow-hidden flex-1",
         className
       )}
     >
       {/* ─── Header: Title, Subtitle, Filter, Legend ─────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3 shrink-0">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-4.5 bg-blue-500 rounded-full shrink-0" />
-            <h2 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-              Bảng So Sánh Tổng Quan
-            </h2>
-          </div>
+          <h2 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+            Bảng So Sánh Tổng Quan
+          </h2>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
             Dữ liệu telemetry trực tiếp theo thời gian thực
           </p>
@@ -362,138 +356,128 @@ export function TelemetryMatrix({ className }: TelemetryMatrixProps = {}) {
 
         <div className="flex flex-wrap items-center gap-3">
           <MatrixFilterBar servers={servers} />
+          {visibleServers.length > 0 && (
+            <div className="flex items-center gap-1.5 ml-1">
+              <CarouselPrevious className="static translate-y-0 left-0 right-0 h-8 w-8 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-300" />
+              <CarouselNext className="static translate-y-0 left-0 right-0 h-8 w-8 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-300" />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ─── Matrix Table (Horizontal scroll ONLY, vertical scroll disabled) ─── */}
-      <div 
-        ref={scrollRef}
-        className="bg-white dark:bg-[#0c101d] border border-slate-200/90 dark:border-slate-800/90 rounded-xl overflow-x-auto overflow-y-hidden custom-scrollbar shadow-2xs transition-colors w-full max-w-full"
-      >
-        <table className="w-full text-xs text-left border-collapse min-w-max">
-          {/* Table Header: Metric Name + Server Columns */}
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-[#1a2336] bg-[#f8fafc] dark:bg-[#0f1422]">
-              <th className="sticky left-0 bg-[#f8fafc] dark:bg-[#0f1422] z-20 px-3.5 py-2.5 w-60 min-w-[220px] max-w-[240px] text-slate-500 dark:text-slate-400 font-semibold text-[11px] sm:text-xs uppercase tracking-wider shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-slate-200/80 dark:border-slate-800/80">
-                Metric Tên / Tham Số Đo
-              </th>
-              {visibleServers.length === 0 ? (
-                <th className="px-3.5 py-2.5 text-center text-slate-400 font-normal italic">
-                  Không có server nào được chọn
-                </th>
-              ) : (
-                visibleServers.map((node) => {
-                  const isOffline = node.status === "offline";
-                  const isDegraded = node.status === "degraded";
-
-                  return (
-                    <th
-                      key={node.id}
-                      className="px-3 py-2.5 text-center font-medium text-slate-800 dark:text-slate-200 min-w-[140px] border-r border-slate-100 dark:border-slate-800/50 last:border-r-0"
-                    >
-                      <div className="flex flex-col items-center justify-center gap-1">
-                        <div className="flex items-center gap-1.5 font-mono font-bold">
-                          <span
-                            className={`w-2 h-2 rounded-full shrink-0 ${
-                              node.status === "online"
-                                ? "bg-emerald-500 animate-pulse"
-                                : isDegraded
-                                  ? "bg-amber-500"
-                                  : "bg-slate-400"
-                            }`}
-                          />
-                          <span className="text-xs sm:text-sm font-bold tracking-tight">
-                            {node.name}
-                          </span>
-                        </div>
-                        <Badge
-                          variant={node.status}
-                          className="uppercase text-[9px] px-2 py-0.5 font-semibold tracking-wide"
-                        >
-                          {node.status}
-                        </Badge>
+      {/* ─── Matrix Table (Flexbox + Carousel) ─── */}
+      <div className="flex bg-white dark:bg-[#0c101d] border border-slate-200/90 dark:border-slate-800/90 rounded-xl overflow-hidden shadow-2xs w-full max-w-full flex-1 min-h-0">
+        {/* Sticky Left Column (Metrics) */}
+        <div className="w-56 sm:w-60 min-w-[210px] max-w-[240px] shrink-0 border-r border-slate-200/80 dark:border-slate-800/80 bg-[#f8fafc] dark:bg-[#0f1422] flex flex-col z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)]">
+          {/* Header Cell */}
+          <div className="h-[68px] min-h-[68px] max-h-[68px] shrink-0 px-3.5 flex items-center text-slate-500 dark:text-slate-400 font-semibold text-[11px] sm:text-xs uppercase tracking-wider border-b border-slate-200 dark:border-[#1a2336] box-border overflow-hidden">
+            Metric Tên / Tham Số Đo
+          </div>
+          {/* Rows Cells */}
+          {visibleRows.length === 0 ? (
+            <div className="h-12 px-3.5 py-1.5 flex items-center text-slate-400 italic text-xs">
+              Chưa bật metric nào.
+            </div>
+          ) : (
+            visibleRows.map((row) => (
+              <div
+                key={row.key}
+                onMouseEnter={() => setHoveredRow(row.key)}
+                onMouseLeave={() => setHoveredRow(null)}
+                className={`h-[37px] min-h-[37px] max-h-[37px] shrink-0 px-3.5 flex items-center border-b border-slate-100 dark:border-[#151e30] last:border-b-0 box-border overflow-hidden transition-colors ${hoveredRow === row.key ? "bg-slate-50 dark:bg-[#121929]" : ""
+                  }`}
+              >
+                <div className="flex items-center gap-2 w-full">
+                  {row.icon && (
+                    <div className="p-1 rounded-md bg-slate-100/90 dark:bg-slate-800/70 shrink-0">
+                      {row.icon}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-xs sm:text-[12.5px] text-slate-800 dark:text-slate-100 truncate">
+                      {row.label}
+                    </div>
+                    {row.thresholdLabel && (
+                      <div className="font-mono text-[10px] text-slate-400 dark:text-slate-500 tracking-tight truncate">
+                        {row.thresholdLabel}
                       </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Carousel (Servers) */}
+        <div className="flex-1 min-w-0 h-full">
+          <CarouselContent wrapperClassName="h-full" className="ml-0 h-full">
+            {visibleServers.length === 0 ? (
+              <CarouselItem className="pl-0 basis-full flex items-center justify-center text-slate-400 italic text-xs h-[68px]">
+                Vui lòng chọn ít nhất một Server để xem dữ liệu so sánh.
+              </CarouselItem>
+            ) : (
+              visibleServers.map((node) => {
+                const isOffline = node.status === "offline";
+                const isDegraded = node.status === "degraded";
+
+                return (
+                  <CarouselItem
+                    key={node.id}
+                    className="pl-0 basis-full sm:basis-1/2 lg:basis-1/4 min-w-0 shrink-0 grow-0 border-r border-slate-100 dark:border-slate-800/50 last:border-r-0 flex flex-col h-full"
+                  >
+                    {/* Header Cell */}
+                    <div className="h-[68px] min-h-[68px] max-h-[68px] shrink-0 px-2 py-1.5 flex flex-col items-center justify-center gap-0.5 border-b border-slate-200 dark:border-[#1a2336] bg-[#f8fafc] dark:bg-[#0f1422] box-border overflow-hidden">
+                      <div className="flex items-center gap-1.5 font-mono font-bold leading-tight">
+                        <span
+                          className={`w-2 h-2 rounded-full shrink-0 ${node.status === "online"
+                            ? "bg-emerald-500 animate-pulse"
+                            : isDegraded
+                              ? "bg-amber-500"
+                              : "bg-slate-400"
+                            }`}
+                        />
+                        <span className="text-xs sm:text-sm font-bold tracking-tight truncate max-w-[110px]">
+                          {node.name}
+                        </span>
+                      </div>
+                      <Badge
+                        variant={node.status}
+                        className="uppercase text-[9px] px-2 py-0 h-4 font-semibold tracking-wide leading-none"
+                      >
+                        {node.status}
+                      </Badge>
                       {node.roleDescription && (
                         <div
-                          className={`text-[10px] font-normal italic lowercase mt-0.5 truncate max-w-[130px] mx-auto ${
-                            isOffline
-                              ? "text-red-500/80 dark:text-red-400/80"
-                              : "text-slate-400 dark:text-slate-500"
-                          }`}
+                          className={`text-[10px] font-normal italic lowercase truncate w-full text-center leading-tight ${isOffline
+                            ? "text-red-500/80 dark:text-red-400/80"
+                            : "text-slate-400 dark:text-slate-500"
+                            }`}
                         >
                           {node.roleDescription}
                         </div>
                       )}
-                    </th>
-                  );
-                })
-              )}
-            </tr>
-          </thead>
-
-          {/* Table Body: Filtered Metric Rows */}
-          <tbody className="divide-y divide-slate-100 dark:divide-[#151e30]">
-            {visibleRows.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={Math.max(1, visibleServers.length + 1)}
-                  className="px-3.5 py-8 text-center text-slate-400 italic text-xs"
-                >
-                  Không có metric nào được chọn để hiển thị. Vui lòng bật lại
-                  các hàng trong bộ lọc.
-                </td>
-              </tr>
-            ) : visibleServers.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={2}
-                  className="px-3.5 py-8 text-center text-slate-400 italic text-xs"
-                >
-                  Vui lòng chọn ít nhất một Server để xem dữ liệu so sánh.
-                </td>
-              </tr>
-            ) : (
-              visibleRows.map((row) => (
-                <tr
-                  key={row.key}
-                  className="hover:bg-slate-50/80 dark:hover:bg-[#121929] transition-colors group"
-                >
-                  {/* Metric Label & Threshold Note - Sticky Left */}
-                  <td className="sticky left-0 bg-white dark:bg-[#0c101d] group-hover:bg-slate-50 dark:group-hover:bg-[#121929] z-10 px-3.5 py-1.5 w-60 min-w-[220px] max-w-[240px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)] border-r border-slate-200/80 dark:border-slate-800/80 transition-colors">
-                    <div className="flex items-center gap-2">
-                      {row.icon && (
-                        <div className="p-1 rounded-md bg-slate-100/90 dark:bg-slate-800/70 shrink-0">
-                          {row.icon}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-xs sm:text-[12.5px] text-slate-800 dark:text-slate-100 truncate">
-                          {row.label}
-                        </div>
-                        {row.thresholdLabel && (
-                          <div className="font-mono text-[10px] text-slate-400 dark:text-slate-500 tracking-tight truncate">
-                            {row.thresholdLabel}
-                          </div>
-                        )}
-                      </div>
                     </div>
-                  </td>
 
-                  {/* Server Values */}
-                  {visibleServers.map((node) => (
-                    <td
-                      key={node.id}
-                      className="px-3 py-1.5 text-center whitespace-nowrap min-w-[140px] border-r border-slate-100 dark:border-slate-800/40 last:border-r-0"
-                    >
-                      {row.renderValue(node)}
-                    </td>
-                  ))}
-                </tr>
-              ))
+                    {/* Rows Cells */}
+                    {visibleRows.map((row) => (
+                      <div
+                        key={row.key}
+                        onMouseEnter={() => setHoveredRow(row.key)}
+                        onMouseLeave={() => setHoveredRow(null)}
+                        className={`h-[37px] min-h-[37px] max-h-[37px] shrink-0 px-1.5 flex items-center justify-center whitespace-nowrap border-b border-slate-100 dark:border-[#151e30] last:border-b-0 box-border overflow-hidden transition-colors ${hoveredRow === row.key ? "bg-slate-50/80 dark:bg-[#121929]" : ""
+                          }`}
+                      >
+                        {row.renderValue(node)}
+                      </div>
+                    ))}
+                  </CarouselItem>
+                );
+              })
             )}
-          </tbody>
-        </table>
+          </CarouselContent>
+        </div>
       </div>
-    </section>
+    </Carousel>
   );
 }

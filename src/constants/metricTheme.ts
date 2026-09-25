@@ -157,3 +157,57 @@ export function getQueueItemColor(
   }
 }
 
+// ─── Metric Values Threshold Colors ────────────────────────────────
+export function getMetricStatusColor(
+  value: number,
+  warningThreshold: number,
+  degradedThreshold: number,
+  inverted: boolean = false
+): string {
+  // inverted = true: lower is worse (e.g., success rate)
+  // inverted = false: higher is worse (e.g., cpu, latency, error rate)
+  if (inverted) {
+    if (value <= degradedThreshold) return "text-[#f87171] dark:text-red-400";
+    if (value <= warningThreshold) return "text-[#fbbf24] dark:text-amber-400";
+    return "text-[#4ade80] dark:text-emerald-400";
+  } else {
+    if (value >= degradedThreshold) return "text-[#f87171] dark:text-red-400";
+    if (value >= warningThreshold) return "text-[#fbbf24] dark:text-amber-400";
+    return "text-[#4ade80] dark:text-emerald-400";
+  }
+}
+
+export function getSuccessRateColor(rate: number): string {
+  return getMetricStatusColor(rate, 99, 96, true);
+}
+
+export function getError4xxColor(rate: number): string {
+  return rate >= 5.0 ? "text-[#fbbf24] dark:text-amber-400" : "text-[#4ade80] dark:text-emerald-400";
+}
+
+export function getRequestVolumeColor(totalReq: number): string {
+  if (totalReq >= 1_000_000_000) return "text-red-600 dark:text-red-500";
+  if (totalReq >= 1_000_000) return "text-orange-500 dark:text-orange-400";
+  if (totalReq >= 100_000) return "text-amber-500 dark:text-amber-400";
+  return "text-emerald-600 dark:text-emerald-400";
+}
+
+export function getRamColor(ramGB: number): string {
+  if (ramGB >= 14) return "text-[#f87171] dark:text-red-400";
+  if (ramGB >= 10) return "text-[#fbbf24] dark:text-amber-400";
+  return "text-[#4ade80] dark:text-emerald-400";
+}
+
+export function getHeapColor(heapMB: number): string {
+  if (heapMB >= 1536) return "text-[#f87171] dark:text-red-400";
+  if (heapMB >= 1024) return "text-[#fbbf24] dark:text-amber-400";
+  return "text-[#4ade80] dark:text-emerald-400";
+}
+
+export function getRpsColor(rps: number): string {
+  if (rps >= 5000) return "text-purple-600 dark:text-purple-400";
+  if (rps >= 1000) return "text-blue-600 dark:text-blue-400";
+  if (rps >= 100) return "text-emerald-600 dark:text-emerald-400";
+  return "text-slate-700 dark:text-slate-300";
+}
+
